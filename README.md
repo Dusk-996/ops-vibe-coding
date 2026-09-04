@@ -114,6 +114,8 @@ flowchart TD
     Accept -->|接受| Done
 ```
 
+也可以打开 [Archify 交互版流程图](docs/ops-vibe-coding-workflow.html)，使用主题切换、缩放、搜索和阶段导览来探索这条路径。
+
 这不是一条只向前走的代码生成流水线。Parity、Review、Ops Readiness 或 E2E 发现问题后，都要回到对应阶段修正并重新提供证据；AI 不能用“应该可用”代替验证。
 
 ## 10 分钟理解每个阶段

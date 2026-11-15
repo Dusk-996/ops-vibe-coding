@@ -1,47 +1,24 @@
 # Prototype Approval
 
-> Example Artifact. Illustrative approval only; not evidence of a real human review.
+> 教学批准记录，不是实际人员对产品的批准。
 
 ## Gate Record
 
-- **Gate**: Human Prototype Review
-- **Example Status**: `APPROVED`
-- **Reviewer Role**: Human
-- **Scope**: Deployment Detail 的单 Deployment Restart Workflow
+- Gate：S02 Human Prototype Review
+- Example Status：APPROVED（illustrative）
+- 实际人工评审：NOT_PERFORMED
+- 范围：Deployment Detail 的单目标 Restart 请求与审计查看；不承诺 rollout 完成。
 
-## Approved Workflow
+## 产品意图
 
-```text
-Deployment Detail
-→ Restart
-→ Confirmation Dialog
-→ Confirm
-→ Running
-→ Success / Failed
-→ Audit Record
-```
+Deployment Detail → Restart → 显示目标的确认框 → Confirm → 提交中 → 请求已提交／明确拒绝／结果待核验 → 对应操作记录。
+Cancel 不发送变更。未知结果提示“请求可能已执行，请勿重复提交，保存操作 ID 并联系核验人员”。
 
-## Accepted Scope
+只对已授权 Namespace 内一个 Deployment 操作。页面按钮不是后端授权；“请求已提交”不是“服务恢复”。集群、Namespace、Deployment 必须在确认框可辨认。
 
-- Restart one Deployment
-- Namespace scoped
-- Explicit confirmation required
-- Success and failure feedback required
-- Audit record required
+## 排除与门禁
 
-## Out of Scope
+批量、定时、回滚、自动重试、rollout 自动跟踪均排除。后台持久化与防重由后续架构确认；这里不决定数据库或 Worker。
+真实项目记录实际审核人、日期、原型版本、viewport、允许范围及下一步；未知约束不由 Agent 填为批准。
 
-- Batch restart
-- Rollback
-- Scheduled or cron restart
-- Automatic retry
-
-## Decision
-
-示例决定为进入 React + Mock。真实项目必须记录实际 Reviewer、日期、Prototype 版本
-和目标 viewport。
-
-## Next
-
-[React Mock Contract](../02-react-mock/contract.md) 消费本文件中获批的 Workflow、范围
-与非目标。
+下一步：[React Mock Contract](../02-react-mock/contract.md)。

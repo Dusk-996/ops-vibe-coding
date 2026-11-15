@@ -1,33 +1,13 @@
 # Prototype Parity
 
-> Example Artifact. The status below illustrates the report shape; no browser was
-> executed and it is not real parity evidence.
+> 教学报告。Example Status: PASS；Actual Verification: NOT_VERIFIED。没有执行浏览器或截图比较。
 
-## Gate Record
+## 核对目标
 
-- **Gate**: Prototype Parity
-- **Example Status**: `PASS`
-- **Scope**: Approved Restart Workflow and React Mock Contract
-- **Visual**: `PASS` — illustrative
-- **Interaction**: `PASS` — illustrative
+比较 [批准范围](../01-prototype/approval.md) 与 [Mock 契约](../02-react-mock/contract.md)：目标确认、Cancel 不发送、Running 禁重复、Submitted 只表示提交、Unknown 停手与操作记录入口、审计未确认的独立提示。
 
-## Verified in This Example
+真实项目需附原型版本、viewport、React 提交/build、各状态截图、实际流程与控制台结果；不是只检查按钮存在。未验证或 FAIL 不可由示例 PASS 放行。
 
-- Restart button exists on Deployment Detail.
-- Confirmation dialog identifies the selected target.
-- Confirm and Cancel preserve the approved interaction.
-- Running, Success and Failed states exist.
-- Success exposes a path to the audit record.
+## 下一步
 
-## Evidence Required in a Real Project
-
-- Approved Prototype version and target viewport
-- React commit or build identifier
-- Browser screenshots for relevant states
-- Executed Workflow record and console findings
-
-## Decision
-
-Example decision: proceed to
-[Architecture Draft](../04-architecture/stack-selection.draft.md). A real project may
-only proceed after browser evidence supports the applicable Parity status.
+仅教学展示进入 [Architecture Draft](../04-architecture/stack-selection.draft.md)。真实项目须取得有效 Parity 证据。

@@ -1,36 +1,22 @@
 # Human Acceptance
 
-> Example Artifact. No real business owner accepted a running system. The decision
-> below illustrates the final record shape only.
+> 实际人工验收 NOT_PERFORMED，产品运行 NOT_VERIFIED；没有真实业务负责人接受运行系统。
 
-## Gate Record
+## 应消费的材料
 
-- **Gate**: Human Acceptance
-- **Example Decision**: `ACCEPTED FOR DOCUMENTATION`
-- **Product Acceptance Status**: `NOT_PERFORMED`
-- **Reviewer Role**: Product and operational risk owner
+产品范围和原型/Mock、已确认架构、Spec及纵向Tickets、实际代码和原始测试、两轴Review、Ops风险和有效接受记录、E2E报告及全部失败/跳过/未验证限制。
 
-## Inputs Reviewed
+## 人的检查问题
 
-- Approved product scope and Workflow
-- Architecture and Grill decisions
-- Spec and vertical Tickets
-- TDD and Code Review evidence
-- Ops Readiness findings and accepted risks
-- E2E report, including failed or skipped scenarios
+- 是否解决用户问题，用户是否明白“已提交不等于已完成”？
+- 未授权、重复请求、未知、审计未确认时是否准确反馈并停止？
+- 进程崩溃后，能否凭记录与权威证据进入有权审批的恢复路径？
+- 核验、更正、留存、凭证和可用性限制是否可接受？
+- 新人是否能定位阶段与证据，知道下一步和求助对象？
+- 证据是否对应当前产品修订、范围和环境，而不是教学 PASS？
 
-## Questions for the Human Owner
+## 决定与发布交接
 
-- Does the Workflow solve the original operational problem?
-- Are authorization, confirmation and audit behavior acceptable?
-- Are timeout, duplicate and failure outcomes understandable to the user?
-- Are Kubernetes credential scope and residual risks acceptable?
-- Is the operational and maintenance cost justified?
+本教学仅展示记录结构，不声称有人实际批准或产品验收通过。真实记录应有对象版本、日期、检查人及授权角色、接受/补充/退回及依据。
 
-## Example Decision
-
-The documentation example is accepted as a clear illustration of the Ops Vibe Coding
-Artifact chain. The Kubernetes restart product itself remains `NOT_PERFORMED` and
-`NOT_VERIFIED` because no implementation or environment exists in this repository.
-
-Only a named human owner with real evidence can accept a product for release or production use.
+业务接受后仍需 [生产发布交接](../../../docs/06-ops-readiness.md#生产发布交接)的部署、监控、数据恢复和发布授权。没有实现或环境时不能以本目录替代上线证据。

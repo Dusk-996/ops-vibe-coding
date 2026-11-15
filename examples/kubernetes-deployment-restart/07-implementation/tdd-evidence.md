@@ -1,56 +1,25 @@
 # TDD Evidence
 
-> Example Artifact. `NOT_EXECUTED`: the commands, failures and results below illustrate
-> what a real implementation record should contain. This repository includes no app.
+> **Actual Status: NOT_EXECUTED。** 仓库无应用，以下为预期测试名称/证据类别，不是真实命令输出。
 
-## Scope
+输入：[Ticket 01](../06-tickets/ticket-01.md)、[Ticket 02](../06-tickets/ticket-02.md)。
 
-- [Ticket 01](../06-tickets/ticket-01.md)
-- [Ticket 02](../06-tickets/ticket-02.md)
+## RED → GREEN → REFACTOR
 
-## RED
+真实项目先保存为缺失行为而失败的测试输出，再最小实现，最后在不改变约束下重构。每轮绑定代码提交/未提交差异、环境、时间、实际命令、退出码与原始结果。不能把依赖错误当成业务 RED。
 
-Example failing tests are written before implementation:
+待实现用例包括：
 
-```text
-test_authorized_restart_writes_audit
-test_unauthorized_restart_never_calls_kubernetes
-test_timeout_is_not_retried
-test_duplicate_operation_is_rejected
-test_authorized_user_can_view_restart_audit
-restart-dialog.spec: cancel sends no request
-restart-dialog.spec: running prevents duplicate submission
-```
-
-Real evidence must include the exact command and failure output showing that each test
-failed for the intended missing behavior, not because of an unrelated environment error.
-
-## GREEN
-
-The smallest implementation should satisfy the Spec using replaceable authorization,
-Kubernetes and audit boundaries. A real record would attach test output to the exact
-commit under review.
-
-## REFACTOR
-
-Refactoring may remove duplication or clarify boundaries without adding Redis, Kafka,
-Workers, microservices or automatic mutation retry.
+- 未授权和取消不调用 Kubernetes；意图持久化先于 PATCH。
+- 各层 mutation 至多发送一次；超时 Unknown 且不重试。
+- 同 ID 重放/改绑、同目标不同 ID 并发与跨进程占用。
+- 明确接受＋最终审计确认只表示 Submitted，不表示 rollout 完成。
+- 意图事务未确认不发送；最终写入未确认保留占用及准确远端观测。
+- 持久意图后崩溃不恢复发送；人工更正需证据/批准/版本条件，事务失败不解锁。
+- 记录读取范围、脱敏、空/加载/查询失败和新会话核验交接。
 
 ## VERIFY
 
-Example command categories:
+后端事务/并发/集成测试、前端交互、build/lint、真实 Workflow 与适用环境的权限/故障/维护验证分别留证。替身可以计数和注入失败，不证明真实 Kubernetes RBAC 或人工恢复路径有效。
 
-```text
-backend unit and integration tests
-frontend component and interaction tests
-frontend build
-lint and static checks
-browser Workflow test
-```
-
-## Example Status
-
-`NOT_EXECUTED — documentation example`
-
-The next reviews demonstrate their expected structure only. They cannot change this
-status into real implementation evidence.
+实际结果仍为 NOT_EXECUTED。后续 [Review](../08-review/code-review.md) 或教学 PASS 不能将其升级为已执行。

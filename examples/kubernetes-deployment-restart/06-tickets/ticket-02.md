@@ -1,42 +1,22 @@
-# Ticket 02 — View the Restart Audit Record
+# Ticket 02 — 查看记录并支持受控核验交接
 
-> Example Ticket. It is a vertical user-value slice, not a separate database, API or
-> frontend layer ticket.
+> 教学纵向切片。依赖 [Ticket 01](ticket-01.md) 的操作记录，实际实现 NOT_EXECUTED。
 
-## User Value
+## 用户价值与输入
 
-An authorized user can open the audit history for a Deployment and understand who
-requested a restart, when it ran and how it ended.
+授权用户能按操作 ID 查看提交状态及审计确认情况；未知时知道停止和联系谁。输入：[Spec](../05-spec/deployment-restart.spec.md)、Ticket 01 产物。
 
-## Inputs
+## 范围与验收
 
-- [Deployment Restart Spec](../05-spec/deployment-restart.spec.md)
-- Audit records produced by [Ticket 01](ticket-01.md)
+- GET Audit 按原资源范围及 operation_id 筛选；同样执行后端授权，不泄露其他 Namespace 的记录。
+- 显示 SUBMITTING、SUBMITTED、REJECTED、UNKNOWN 的含义，分开表达已保存结果、远端观测和审计确认；空结果不代表未执行。
+- 从提交结果可定位操作 ID；页面刷新只查询，不自动再次提交。
+- Unknown 提示保存 ID、目标、证据并联系核验人员，目标保持阻断。
+- 交付 [受控维护规程](../05-spec/deployment-restart.spec.md#人工核验与受控维护)：管理员只读取证，有权人员批准，有权维护者检查原处理终止和版本条件，在同一事务中补记结果/核验审计/释放；任何前提或事务未确认继续阻断。
+- 核验更正保留原事件与核验人/批准人/维护人/时间/依据；不能因未见标记断言从未提交。
 
-## Scope
+## 验证与非目标
 
-- Namespace authorization for audit lookup
-- Audit query endpoint and persistence query
-- Deployment Detail audit list with outcome and timestamps
-- Success result navigation to the corresponding record
-- Empty, loading and failed query states
-- API, repository and frontend interaction tests
+真实实现需 API/查询授权、UI 空/加载/查询故障、未知反馈、版本冲突、维护事务失败及完整用户切片的证据。人工规程还需在获准等价环境验证，不能靠本文宣告恢复有效。
 
-## Non-goals
-
-- Global audit administration
-- Export or long-term retention policy changes
-- Editing or deleting audit records
-
-## Acceptance
-
-- An authorized user sees records for the selected namespace and Deployment.
-- An unauthorized user receives `403` and no audit data.
-- Success and Failed outcomes are distinguishable without exposing secrets.
-- A successful restart result links to its operation identifier.
-- Empty and audit-query failure states are explicit.
-
-## Verification
-
-The Ticket is complete only when backend, frontend and Workflow evidence covers the
-same user-visible slice. It must not be closed from an API-only or UI-only result.
+不提供编辑/删除审计的普通用户接口、强制解锁、自动集群核验、记录清理、批量或生产部署。没有实际维护规程与权限证据时，恢复能力保持未验证。

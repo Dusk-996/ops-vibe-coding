@@ -7,7 +7,7 @@
 ## Problem
 
 内部 Kubernetes Operations Platform 的用户需要安全地 Restart 一个
-Deployment，并确认执行结果和审计记录，而不是依赖人工执行 `kubectl`。
+Deployment，并确认请求提交结果和审计记录，而不是依赖人工执行 `kubectl`。
 
 ## Why Full Track
 
@@ -57,3 +57,9 @@ Artifact → Artifact 的具体链路，不重新定义 Workflow 或 Gate 状态
 本目录中的 `PASS`、`APPROVED`、命令和测试结果都是教学用 illustrative records，
 不是对真实系统执行后的证据。真实项目必须替换示例版本、环境、命令输出、截图或日志，
 并由有权限的人完成风险接受和最终验收。
+
+## 本例的结果与恢复边界
+
+Submitted 仅表示请求已被接受且最终审计持久化，不表示 rollout 完成。Unknown 可能已产生变更，禁止重复提交；意图和占用先持久化，未知/最终审计未确认时持续阻断。核验由现有管理员只读取证，再由有权人员批准、有权维护者事务补记与释放。详细状态和失败判据以 [Spec](05-spec/deployment-restart.spec.md) 为准。
+
+本例不提供应用、可执行SQL、自动核验、强制解锁、记录清理或 exactly-once 保证。文档走查、Skill阶段练习、真实实现测试和生产恢复验证分别记录；仅练习部分阶段不能勾选整条Full Track。新人先读 [Quick Start](../../docs/01-quick-start.md)，卡住查 [流程定位](../../docs/09-troubleshooting.md)。

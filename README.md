@@ -143,6 +143,8 @@ flowchart TD
 
 ## 从这里开始
 
+- **懂运维、不熟悉开发的新人**：从 [Quick Start](docs/01-quick-start.md) 的准备检查和六组导航开始。每步都有输入、AI 指令、产物、检查、停手和下一步；遇到问题查 [流程问题定位](docs/09-troubleshooting.md)。
+- **换会话或接手任务**：先核对 [交接记录](harness/examples/handoff.example.md) 的当前阶段、原始门禁状态、证据和阻断，再继续。
 - 第一次体验、Demo 或低风险小工具：阅读 [Quick Start](docs/01-quick-start.md)，走 [Lightweight Track](workflows/lightweight.md)。
 - 想直接查看 Full Track 每个阶段会留下什么：阅读 [Kubernetes Deployment Restart Golden Path](examples/kubernetes-deployment-restart/README.md) 教学示例。
 - 想让 Codex、Claude Code、OpenCode 等 Agent 在多个 Ticket 和多个 Session 中稳定遵循这套流程：阅读 [Harness Engineering](harness/README.md)。
@@ -155,6 +157,16 @@ flowchart TD
 Lightweight Track 会缩短文档与审查深度，但不会跳过产品意图与架构约束的人工确认，也不代表生产就绪。涉及生产基础设施、Secret、远程执行、多租户、审批、长任务或明显业务风险时，应升级到 Full Track。
 
 ## 核心原则
+
+### 采用范围与责任
+
+本仓库提供工作流和教学产物；规范 M、模板及依赖接口 A、具体产品 P 的验证分开。流程或练习通过不自动证明某个产品可上线，也不保证新人无错误。
+
+新人负责按任务生成/核对产物、记录证据并在缺输入、权限或结果未知时停手；维护者确认架构、Spec 和测试范围，资深人员复核技术与运行风险，有权发布人另行批准上线。每个采用项目须把这些角色绑定到实际人员，不能由 Agent 代签。
+
+首轮目标是 Windows Codex CLI 0.169.0 的文档与 Skill 阶段采用；实际执行、阻断和未验证范围见 [验证记录](docs/reviews/2026-11-15-reuse-validation.md)。这不是完整 TDD、应用构建、浏览器 E2E 或生产部署的已验证声明，也不覆盖其他系统或运行时。
+
+### 工作原则
 
 - **Prototype before expensive code**：尽量在低成本原型阶段发现产品问题。
 - **Human approves intent, AI executes detail**：AI 执行细节，人决定需求、架构、风险和验收。

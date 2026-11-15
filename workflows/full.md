@@ -1,8 +1,10 @@
 # Full Track
 
-适用于团队工具、长期维护、生产使用、敏感数据或基础设施变更。每一阶段按 Why、Input、Action、Output、Gate、Next 执行。
+适用于团队工具、长期维护、生产使用、敏感数据或基础设施变更。每一阶段按 Why、Input、Action、Output、Gate、Next 执行。S01–S14 是稳定导航编号，不是额外的通过状态。新人从 [Quick Start](../docs/01-quick-start.md)进入；每步的规则仍以本文件为准。
 
-## 1. Explore — HTML Prototype
+<a id="s01"></a>
+
+## S01. Explore — HTML Prototype
 
 - **Why**：以最低成本把模糊想法变成可体验产品。
 - **Input**：Ops Idea、用户和业务痛点。
@@ -11,7 +13,9 @@
 - **Gate**：无；允许快速探索。
 - **Next**：Human Prototype Review。
 
-## 2. Human Prototype Review
+<a id="s02"></a>
+
+## S02. Human Prototype Review
 
 - **Why**：在正式工程化前确认产品意图。
 - **Input**：可交互 Prototype。
@@ -20,7 +24,9 @@
 - **Gate**：`Prototype Approved`。
 - **Next**：React + Mock。
 
-## 3. React + Mock
+<a id="s03"></a>
+
+## S03. React + Mock
 
 - **Why**：把批准的视觉与交互变成可运行产品契约。
 - **Input**：Prototype 与批准记录。
@@ -29,7 +35,9 @@
 - **Gate**：关键流程实际可运行；未验证标为 `NOT_VERIFIED`。
 - **Next**：Prototype Parity Gate。
 
-## 4. Prototype Parity Gate
+<a id="s04"></a>
+
+## S04. Prototype Parity Gate
 
 - **Why**：防止工程化转换改变已批准设计。
 - **Input**：批准的 HTML、React App、关键流程。
@@ -38,7 +46,9 @@
 - **Gate**：`PASS`，或人接受 `PASS_WITH_NOTES`；`FAIL` 必须退回修复。
 - **Next**：Architecture Draft。
 
-## 5. Architecture Draft
+<a id="s05"></a>
+
+## S05. Architecture Draft
 
 - **Why**：把 UI 信号转成能力候选，而不是直接脑补技术组件。
 - **Input**：React Mock 与已知运行约束。
@@ -47,7 +57,9 @@
 - **Gate**：Draft 明确写“完成 Grill 后再 Finalize”，不得进入 SDD。
 - **Next**：Grill。
 
-## 6. Grill
+<a id="s06"></a>
+
+## S06. Grill
 
 - **Why**：补齐 UI 无法表达的运行约束。
 - **Input**：Draft 的开放问题。
@@ -56,7 +68,9 @@
 - **Gate**：会改变架构的关键约束已由人确认。
 - **Next**：Architecture Final。
 
-## 7. Architecture Final
+<a id="s07"></a>
+
+## S07. Architecture Final
 
 - **Why**：让组件、部署单元和技术选择同时受产品能力与运行约束支持。
 - **Input**：同一 Draft 与 Grill 决策。
@@ -65,7 +79,9 @@
 - **Gate**：关键未知项仍存在时继续保持 Draft；不得伪造 Final。
 - **Next**：SDD / Spec。
 
-## 8. SDD / Spec
+<a id="s08"></a>
+
+## S08. SDD / Spec
 
 - **Why**：把产品和架构变成精确、可测试的行为契约。
 - **Input**：Prototype、Architecture Final、决策记录。
@@ -74,7 +90,9 @@
 - **Gate**：范围、风险和验收条件由人确认。
 - **Next**：Tickets。
 
-## 9. Tickets
+<a id="s09"></a>
+
+## S09. Tickets
 
 - **Why**：把 Spec 变成可独立实现和验证的工作单元。
 - **Input**：已批准 Spec。
@@ -83,7 +101,9 @@
 - **Gate**：每项能在一个独立上下文中完成并验证。
 - **Next**：TDD。
 
-## 10. TDD
+<a id="s10"></a>
+
+## S10. TDD
 
 - **Why**：用反馈循环约束实现，而不是一次性生成大量代码。
 - **Input**：一个 Ticket、必要项目文档和相关代码。
@@ -92,7 +112,9 @@
 - **Gate**：验收测试、单元测试、lint/build 和 Ticket 条件通过。
 - **Next**：Code Review。
 
-## 11. Code Review
+<a id="s11"></a>
+
+## S11. Code Review
 
 - **Why**：分别检查仓库规范与 Spec 符合度。
 - **Input**：固定比较点、Spec、代码和测试。
@@ -101,16 +123,20 @@
 - **Gate**：阻断问题解决。
 - **Next**：Ops Readiness Review。
 
-## 12. Ops Readiness Review
+<a id="s12"></a>
+
+## S12. Ops Readiness Review
 
 - **Why**：判断运维软件是否具备合理的生产运行和操作安全基础。
 - **Input**：架构、Spec、代码、部署配置和测试证据。
 - **Action**：按风险检查危险操作、授权、审计、Secret、远程执行、Kubernetes、异步任务、API、可观测性、数据生命周期、部署和恢复。
 - **Output**：`PASS`、`PASS_WITH_RISKS` 或 `FAIL` 报告。
-- **Gate**：无未修复且未获授权接受的主要风险；关键控制有足够证据。
+- **Gate**：按 [Ops Readiness 的状态判定](../docs/06-ops-readiness.md#状态判定)放行；关键控制未验证、阻断项未修复或重大风险未被有效接受时不得放行。
 - **Next**：E2E Test Plan。
 
-## 13. E2E Test Plan → Playwright → Test Report
+<a id="s13"></a>
+
+## S13. E2E Test Plan → Playwright → Test Report
 
 - **Why**：以真实用户 Workflow 验证系统，而不是只看元素存在。
 - **Input**：Spec、Tickets、运行环境和允许操作边界。
@@ -119,13 +145,15 @@
 - **Gate**：破坏性或生产操作有明确权限；测试范围和结果由人确认。
 - **Next**：Human Acceptance。
 
-## 14. Human Acceptance
+<a id="s14"></a>
+
+## S14. Human Acceptance
 
 - **Why**：AI 的测试结论不能代替业务和风险判断。
 - **Input**：全部产物、审查和测试证据。
 - **Action**：人确认产品意图、价值、失败行为、风险与运行成本。
-- **Output**：接受、补充或退回。
-- **Gate**：只有人可以关闭最终闭环。
+- **Output**：可追溯的人工接受、补充或退回记录，含对象、范围、依据与决定人；业务验收结果另交实际项目的生产发布流程。
+- **Gate**：只有有权人员可以关闭最终业务闭环；不自动授予发布或生产操作权限。实际发布还需满足 [生产发布交接](../docs/06-ops-readiness.md#生产发布交接)。
 
 ## 回退规则
 

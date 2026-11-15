@@ -1,44 +1,23 @@
 # React Mock Contract
 
-> Example Artifact. This contract describes the executable product behavior a
-> real React + Mock implementation would expose; no application is included here.
+> 教学契约；仓库没有 React 应用，未执行 build 或浏览器验证。
 
-## Input
+## 输入与交互
 
-- [Prototype Approval](../01-prototype/approval.md)
+输入：[Prototype Approval](../01-prototype/approval.md)。页面为 Deployment Detail。
+Restart 打开目标确认框，Cancel 返回 Idle，Confirm 才发一个 Mock 请求。显示的身份/权限不是实际后端权限证据。
 
-## Page
-
-`Deployment Detail`
-
-## Interaction
-
-- Primary action: `Restart`
-- The action opens a confirmation dialog; it does not mutate immediately.
-- The dialog shows Cluster, Namespace and Deployment target values.
-- `Confirm` submits the Mock request; `Cancel` returns to Idle.
-
-## States
-
-| State | Product behavior |
+| UI 状态 | 用户应看到什么 |
 |---|---|
-| Idle | Restart is available to an authorized user |
-| Running | Action is disabled and progress is visible |
-| Success | Result is visible and links to the audit record |
-| Failed | Error is visible without claiming the Deployment restarted |
+| Idle／Confirmation | 核对目标，允许取消 |
+| Running | 提交中，不重复发送同一操作 |
+| Submitted | 重启请求已提交；未验证 rollout 完成，可查看操作记录 |
+| Rejected | 本次确定未形成变更，显示脱敏类别 |
+| Unknown | 可能已执行，禁止重复提交，保存操作 ID，联系核验人员 |
+| 审计未确认 | 分开显示远端观测与记录未确认；不显示普通成功 |
 
-## Mock API Shape
+Mock API：`POST /api/deployments/{namespace}/{name}/restart`；`GET /api/audit?operation_id={id}`，仍按授权资源范围筛选。
 
-```text
-POST /api/deployments/{namespace}/{name}/restart
-GET  /api/audit?resource=deployment&namespace={namespace}&name={name}
-```
+## 输出与限制
 
-The Mock API represents product intent only. It does not establish the real backend
-authorization, Kubernetes credential or persistence design.
-
-## Output
-
-This artifact gives [Prototype Parity](../03-parity/prototype-parity.md) a fixed page,
-Workflow, state set and API shape to inspect. Architecture treats these as capability
-signals, not final component choices.
+本契约为 [Parity](../03-parity/prototype-parity.md) 提供页面、状态和流程。UI Running 不等于数据库的持久 SUBMITTING；持久状态、占用和恢复由 [Spec](../05-spec/deployment-restart.spec.md)定义。刷新仅查询记录，不授权自动重新执行。

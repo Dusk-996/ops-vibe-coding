@@ -1,33 +1,28 @@
 # Grill Decisions
 
-> Example Artifact. These are illustrative human-confirmed constraints for teaching,
-> not decisions made for a real deployment.
+> 下表为教学决策，不是对实际部署的生产风险批准。实际项目需替换为可追溯确认记录。
 
-## Input
+输入：[Draft](stack-selection.draft.md)。
 
-- [Stack Selection Draft](stack-selection.draft.md)
-
-## Decisions
-
-| Constraint | Example decision | Architecture effect |
+| 约束 | 教学选择 | 架构影响 |
 |---|---|---|
-| Scale | Internal tool with low request volume | No queue, cache or horizontal scaling requirement |
-| Deployment | Runs in the existing Kubernetes platform namespace | Reuse current deployment and network controls |
-| Authentication | Existing company SSO supplies user identity | Backend trusts only verified server-side identity |
-| Authorization | Backend maps identity to namespace-scoped RBAC | Frontend visibility is not authorization evidence |
-| Restart operation | Short synchronous Kubernetes API mutation | One backend request with an explicit timeout |
-| Audit | Every allowed, denied, successful and failed attempt must persist | Reuse the existing PostgreSQL audit store |
-| Retry | Mutation is never automatically retried | Timeout or ambiguous result is returned as Failed |
-| Duplicate execution | Disable repeated UI submission and reject the same in-flight request | Add an operation identifier and in-flight guard |
-| Credentials | Service account can patch Deployments only in allowed namespaces | No cluster-admin credential |
-| HA | Not required for v0.1 | Accepted because this is a low-volume internal tool |
+| 规模与部署 | 低流量内部工具，复用已有 Namespace | 不默认引入队列或 HA |
+| 身份与授权 | 公司 SSO 的可信身份，后端检查 Namespace 范围 | 前端可见性不作为授权 |
+| 目标 | 服务端绑定集群/Namespace/Deployment | 不相信客户端任意选择凭证 |
+| 操作语义 | 短同步 PATCH，只承诺提交结果 | 不自动等待 rollout，不称服务已恢复 |
+| 审计与意图 | 既有 PostgreSQL 先保存意图及目标占用 | 未确认持久化不得调用 Kubernetes |
+| 重试 | 各层 mutation 均不自动重试 | Unknown 不能当作可安全再次提交 |
+| 并发与重放 | 持久化同目标占用，ID 绑定身份/目标/指纹 | 不是仅内存 guard；相同 ID 不再发送 |
+| 释放 | 接受/拒绝结果与最终审计都确认后释放 | 只约束提交阶段，不覆盖整个 rollout |
+| 不确定性 | 超时/崩溃/最终审计未确认保留占用 | 不因 TTL 或等待时间自动解锁 |
+| 核验 | 现有管理员只读取得权威证据 | 不给服务新增 GET 核验权限 |
+| 更正与恢复 | 有权人员审批，有权维护者事务补记/审计/释放 | 不新增通用核验或强制解锁 API |
+| 凭证 | 仅允许 Namespace 的 Deployment patch | 无 cluster-admin；限制 patch 内容 |
+| 保留 | 本示例不新增清理能力，保留操作与防重记录 | 真实生产需另定留存、增长及备份策略 |
+| 可用性 | v0.1 不做 HA；未知会阻断单目标新提交 | 属待真实责任人确认的残余风险 |
 
-## Human-controlled Decisions
+## 人工责任与范围
 
-In a real project, the named owner must approve authentication, authorization,
-credential scope, retry behavior, audit retention and accepted availability risk.
+教学选择仅指导本例文档。真实项目需具名确认权限、留存、备份恢复、核验/维护授权及可用性风险。未知结果无法证明时继续阻断，不提供结果未知下的强制新操作。
 
-## Next
-
-[Architecture Final](stack-selection.md) maps every retained component to these
-constraints and removes unsupported candidates.
+下一步：[Architecture Final](stack-selection.md)。

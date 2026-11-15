@@ -51,72 +51,15 @@ Ops Vibe Coding 不是新的 Agent Framework、Prompt 合集或后台模板。�
 
 ## 完整流程
 
-```mermaid
-flowchart TD
-    Idea[Ops Idea<br/>运维问题与目标]
-    Start{原型从哪里开始?}
-    Create[自行制作 HTML Prototype]
-    Pages[Beautiful Ops Pages<br/>选择单页功能原型]
-    Platform[Beautiful Ops Platform<br/>选择完整平台原型]
-    Adapt[改写业务内容、Mock 数据与交互]
-    Prototype[可交互 HTML Prototype]
-    Approve{Human Prototype Review<br/>产品意图获批?}
+![Ops Vibe Coding 完整工作流，覆盖 S01–S14、人工门禁和反馈路径](docs/diagrams/ops-vibe-coding-workflow.svg)
 
-    React[React + Mock<br/>可运行产品契约]
-    Parity{Prototype Parity Gate<br/>视觉与交互一致?}
+[查看 SVG 大图](docs/diagrams/ops-vibe-coding-workflow.svg) · [编辑 draw.io 源文件](docs/diagrams/ops-vibe-coding-workflow.drawio) · [S01–S14 完整阶段说明](workflows/full.md)
 
-    Draft[Architecture Draft<br/>从 UI 提取能力候选]
-    Grill[Grill<br/>确认部署、安全与可靠性约束]
-    Final{Architecture Final<br/>关键约束已确认?}
+图中蓝色实线表示主路径，黄色菱形标记判断或人工批准，红色虚线表示退回与修复。阶段编号与 Full Track 对应，具体放行条件及回退规则以阶段说明为准。
 
-    Spec[SDD / Spec<br/>精确行为与验收条件]
-    Tickets[Vertical Tickets<br/>一个 Ticket 一个上下文]
-    TDD[TDD<br/>RED → GREEN → REFACTOR → VERIFY]
-    Review{Code Review<br/>Standards + Spec 通过?}
+[Archify 交互版流程图](docs/ops-vibe-coding-workflow.html) 提供主题切换、缩放、搜索和阶段导览。请下载 HTML 后用浏览器打开，当前检查限制见[交互图检查](docs/reviews/2026-11-15-reuse-validation.md#交互图检查)。
 
-    Ops{Ops Readiness Review<br/>运行风险可接受?}
-    Fix[创建有边界的修复 Ticket]
-    Plan[E2E Test Plan<br/>人工批准测试范围]
-    E2E[Playwright E2E<br/>验证真实用户 Workflow]
-    Report{Test Report<br/>结果满足验收条件?}
-    Diagnose[分类问题与补充证据]
-    Accept{Human Acceptance<br/>解决最初的问题?}
-    Done[可运行、可验证的软件]
-
-    Idea --> Start
-    Start -->|会做或已有| Create
-    Start -->|单页功能| Pages
-    Start -->|完整平台| Platform
-    Pages --> Adapt
-    Platform --> Adapt
-    Create --> Prototype
-    Adapt --> Prototype
-    Prototype --> Approve
-    Approve -->|否，继续调整| Prototype
-    Approve -->|是| React
-    React --> Parity
-    Parity -->|FAIL| React
-    Parity -->|PASS / 已接受备注| Draft
-    Draft --> Grill --> Final
-    Final -->|关键约束未知| Grill
-    Final -->|已确认| Spec
-    Spec --> Tickets --> TDD --> Review
-    Review -->|有阻断问题| TDD
-    Review -->|通过| Ops
-    Ops -->|FAIL / 风险未接受| Fix
-    Fix --> TDD
-    Ops -->|PASS / 风险已接受| Plan
-    Plan --> E2E --> Report
-    Report -->|FAIL / SKIPPED| Diagnose
-    Diagnose --> Fix
-    Report -->|PASS| Accept
-    Accept -->|补充或退回| Diagnose
-    Accept -->|接受| Done
-```
-
-也可以打开 [Archify 交互版流程图](docs/ops-vibe-coding-workflow.html)，使用主题切换、缩放、搜索和阶段导览来探索这条路径。
-
-这不是一条只向前走的代码生成流水线。Parity、Review、Ops Readiness 或 E2E 发现问题后，都要回到对应阶段修正并重新提供证据；AI 不能用“应该可用”代替验证。
+Parity、Review、Ops Readiness 或 E2E 发现问题后，都要回到对应阶段修正并重新提供证据。人工验收完成后，将验收记录交给实际项目的生产发布流程。
 
 ## 10 分钟理解每个阶段
 

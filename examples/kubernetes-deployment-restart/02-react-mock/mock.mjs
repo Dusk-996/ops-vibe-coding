@@ -1,16 +1,38 @@
-export const TARGET = Object.freeze({cluster:'lab', namespace:'staging', name:'checkout'});
+export const TARGET = Object.freeze({cluster: 'lab', namespace: 'staging', name: 'checkout'});
+
+const outcomes = new Map([
+  ['accepted', [200, 'SUBMITTED', 'accepted', 'confirmed']],
+  ['timeout', [504, 'UNKNOWN', 'unknown', 'confirmed']],
+  ['rejected', [422, 'REJECTED', 'rejected', 'confirmed']],
+  ['audit-unconfirmed', [503, 'SUBMITTING', 'accepted', 'unconfirmed']],
+]);
 
 export function createMockStore() {
-  const rows = new Map();
-  let count = 0;
+  const responses = new Map();
+  let occupiedId;
+  let mutationCount = 0;
+
   return {
-    get mutationCount() { return count; },
-    lookup(id) { return rows.get(id); },
-    submit(target, id) {
-      count++;
-      const record = {id, target, state:'SUBMITTED', remote:'accepted', audit:'confirmed'};
-      rows.set(id, record);
-      return {code:200, record};
-    }
+    get mutationCount() { return mutationCount; },
+    lookup(id) { return responses.get(id)?.record; },
+    submit(target, id, scenario) {
+      if (!Object.entries(TARGET).every(([key, value]) => target?.[key] === value)) {
+        return {code: 403, error: '目标超出本地范围'};
+      }
+      if (!/^[A-Za-z0-9-]{1,80}$/.test(id ?? '') || !outcomes.has(scenario)) {
+        return {code: 400, error: '操作 ID 或样本无效'};
+      }
+      if (responses.has(id)) return responses.get(id);
+      if (occupiedId) return {code: 409, record: responses.get(occupiedId).record};
+
+      // 此处只统计模拟变更尝试；未知及审计未确认均保持该目标占用。
+      mutationCount++;
+      const [code, state, remote, audit] = outcomes.get(scenario);
+      const record = Object.freeze({id, target: TARGET, state, remote, audit});
+      const response = Object.freeze({code, record});
+      responses.set(id, response);
+      if (state === 'UNKNOWN' || state === 'SUBMITTING') occupiedId = id;
+      return response;
+    },
   };
 }

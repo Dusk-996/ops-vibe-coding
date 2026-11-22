@@ -1,0 +1,10 @@
+{
+  "name":"restart-workflow-local-demo",
+  "version":"1.0.0",
+  "private":true,
+  "type":"module",
+  "engines":{"node":">=20"},
+  "scripts":{"build":"node build.mjs","start":"node server.mjs","test":"node --test mock.test.mjs","e2e":"node browser-test.mjs"},
+  "dependencies":{"react":"18.3.1","react-dom":"18.3.1"},
+  "devDependencies":{"esbuild":"0.25.12","playwright-core":"1.56.1"}
+}

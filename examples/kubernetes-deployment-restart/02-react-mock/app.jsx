@@ -23,6 +23,7 @@ function Demo() {
     return id ? {id, state: 'UNVERIFIED'} : null;
   });
   const [busy, setBusy] = useState(false);
+  const [conflictId, setConflictId] = useState(() => sessionStorage.getItem(storageKey + ':conflict'));
   const [auditText, setAuditText] = useState('');
   const dialog = useRef(null);
   const lock = useRef(false);
@@ -41,6 +42,8 @@ function Demo() {
     setAuditText('');
     const id = crypto.randomUUID();
     sessionStorage.setItem(storageKey, id);
+    sessionStorage.removeItem(storageKey + ':conflict');
+    setConflictId(null);
     try {
       const response = await fetch(RESTART_PATH, {
         method: 'POST', headers: {'Content-Type': 'application/json', 'X-Operation-ID': id},
@@ -48,6 +51,11 @@ function Demo() {
       });
       const result = await response.json();
       if (!result.record) throw new Error('未取得操作记录');
+      if (response.status === 409) {
+        // 分开保留被拒的新请求和占用目标的原记录；刷新只查询原记录。
+        sessionStorage.setItem(storageKey + ':conflict', id);
+        setConflictId(id);
+      }
       sessionStorage.setItem(storageKey, result.record.id);
       setRecord(result.record);
     } catch {
@@ -83,8 +91,10 @@ function Demo() {
       <p>{targetLabel}</p><div className="actions">
         <button onClick={() => dialog.current.close()}>取消</button><button className="primary" onClick={submit}>确认提交</button>
       </div></dialog>
-    {record && <section aria-live="polite" className="card result"><h2>{copy[record.state][0]}</h2><p>{copy[record.state][1]}</p>
-      <div>操作 ID <code>{record.id}</code></div><div className="actions"><button disabled={busy} onClick={showAudit}>查看操作记录</button></div>
+    {record && <section aria-live="polite" className="card result"><h2>{conflictId ? '本次未提交' : copy[record.state][0]}</h2>
+      {conflictId && <><p>另一笔操作已占用目标，本次未执行模拟变更。下方为占用操作的记录。</p><div>本次请求 ID <samp>{conflictId}</samp></div></>}
+      <p>{copy[record.state][1]}</p>
+      <div>{conflictId ? '占用操作 ID' : '操作 ID'} <code>{record.id}</code></div><div className="actions"><button disabled={busy} onClick={showAudit}>查看操作记录</button></div>
       {auditText && <pre>{auditText}</pre>}</section>}
   </>;
 }

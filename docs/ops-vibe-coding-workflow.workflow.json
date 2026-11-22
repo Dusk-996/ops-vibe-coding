@@ -12,6 +12,8 @@
         "label": "完整反馈闭环",
         "focus": [
           "idea",
+          "risk_summary",
+          "formal_design",
           "prototype",
           "prototype_review",
           "react",
@@ -31,12 +33,14 @@
         "label": "原型与产品契约",
         "focus": [
           "idea",
+          "risk_summary",
+          "formal_design",
           "prototype",
           "prototype_review",
           "react",
           "parity"
         ],
-        "note": "先让真实使用者确认意图，再把批准的原型转成 React + Mock。"
+        "note": "S00 明确人、问题和成功标准。人选定原型目标后进入 S01；已有方案也可在记录风险后结束。"
       },
       {
         "id": "architecture-and-spec",
@@ -102,132 +106,43 @@
     "acceptance"
   ],
   "semanticChecks": {
-    "allowedRoots": ["idea"],
-    "allowedTerminals": ["acceptance"],
+    "allowedRoots": [
+      "idea"
+    ],
+    "allowedTerminals": [
+      "acceptance",
+      "risk_summary",
+      "formal_design"
+    ],
     "requiredPaths": [
       { "from": "idea", "to": "acceptance" },
       { "from": "parity", "to": "react" },
       { "from": "ops_readiness", "to": "feedback" },
-      { "from": "e2e", "to": "feedback" }
+      { "from": "e2e", "to": "feedback" },
+      { "from": "idea", "to": "risk_summary" },
+      { "from": "idea", "to": "formal_design" }
     ]
   },
   "nodes": [
-    {
-      "id": "idea",
-      "lane": "intent",
-      "col": 0,
-      "width": 128,
-      "type": "external",
-      "label": "Ops Idea",
-      "sublabel": "运维问题与目标",
-      "tag": "START"
-    },
-    {
-      "id": "prototype",
-      "lane": "intent",
-      "col": 1,
-      "width": 220,
-      "type": "frontend",
-      "label": "HTML Prototype",
-      "sublabel": "自制 / Beautiful Ops Pages / Beautiful Ops Platform"
-    },
-    {
-      "id": "prototype_review",
-      "lane": "early_gates",
-      "col": 1,
-      "width": 140,
-      "type": "security",
-      "label": "Prototype Review",
-      "sublabel": "产品意图获批?",
-      "tag": "HUMAN GATE"
-    },
-    {
-      "id": "react",
-      "lane": "delivery",
-      "col": 2,
-      "width": 160,
-      "type": "frontend",
-      "label": "React + Mock",
-      "sublabel": "可运行产品契约"
-    },
-    {
-      "id": "parity",
-      "lane": "parity_gate",
-      "col": 3,
-      "width": 140,
-      "type": "security",
-      "label": "Prototype Parity",
-      "sublabel": "视觉与交互一致?",
-      "tag": "GATE"
-    },
-    {
-      "id": "architecture",
-      "lane": "contract",
-      "col": 3,
-      "width": 220,
-      "type": "backend",
-      "label": "Architecture → SDD / Spec",
-      "sublabel": "Draft → Grill → Final → 验收条件"
-    },
-    {
-      "id": "architecture_refine",
-      "lane": "architecture_feedback",
-      "col": 3,
-      "width": 180,
-      "type": "external",
-      "label": "补充架构约束",
-      "sublabel": "部署、安全、可靠性"
-    },
-    {
-      "id": "build_review",
-      "lane": "delivery",
-      "col": 4,
-      "width": 190,
-      "type": "backend",
-      "label": "Tickets → TDD → Review",
-      "sublabel": "实现与 Standards + Spec"
-    },
-    {
-      "id": "feedback",
-      "lane": "late_feedback",
-      "col": 4,
-      "width": 190,
-      "type": "external",
-      "label": "Diagnose → Fix Ticket",
-      "sublabel": "分类问题、补证据、重新实现"
-    },
-    {
-      "id": "ops_readiness",
-      "lane": "late_gates",
-      "col": 5,
-      "width": 150,
-      "type": "security",
-      "label": "Ops Readiness",
-      "sublabel": "运行风险可接受?",
-      "tag": "HUMAN GATE"
-    },
-    {
-      "id": "e2e",
-      "lane": "delivery",
-      "col": 5,
-      "width": 200,
-      "type": "backend",
-      "label": "E2E Evidence",
-      "sublabel": "Test Plan → Playwright → Report"
-    },
-    {
-      "id": "acceptance",
-      "lane": "outcomes",
-      "col": 5,
-      "width": 200,
-      "type": "security",
-      "label": "Human Acceptance → Done",
-      "sublabel": "解决最初的问题?",
-      "tag": "DELIVERED"
-    }
+    { "id": "idea", "lane": "intent", "col": 0, "width": 198, "type": "external", "label": "S00 澄清问题与原型目标", "sublabel": "用户、痛点、成功标准" },
+    { "id": "risk_summary", "lane": "early_gates", "col": 0, "width": 172, "type": "external", "label": "风险清单", "sublabel": "保留待决事项后结束" },
+    { "id": "formal_design", "lane": "contract", "col": 0, "width": 172, "type": "external", "label": "正式设计", "sublabel": "设计获批后编写实施计划" },
+    { "id": "prototype", "lane": "intent", "col": 1, "width": 198, "type": "frontend", "label": "S01 制作可交互原型", "sublabel": "选用现有页面或制作 HTML" },
+    { "id": "prototype_review", "lane": "early_gates", "col": 1, "width": 146, "type": "security", "label": "S02 用户确认", "sublabel": "关键流程与反馈", "tag": "HUMAN GATE" },
+    { "id": "react", "lane": "contract", "col": 2, "width": 170, "type": "frontend", "label": "S03 React + Mock", "sublabel": "可运行产品契约" },
+    { "id": "parity", "lane": "parity_gate", "col": 3, "width": 150, "type": "security", "label": "S04 一致性审查", "sublabel": "布局与交互", "tag": "GATE" },
+    { "id": "architecture", "lane": "contract", "col": 3, "width": 200, "type": "backend", "label": "S05–S08 架构与规格", "sublabel": "草案、追问、定稿、Spec" },
+    { "id": "architecture_refine", "lane": "architecture_feedback", "col": 3, "width": 180, "type": "external", "label": "补充架构约束", "sublabel": "部署、安全、可靠性" },
+    { "id": "build_review", "lane": "delivery", "col": 4, "width": 192, "type": "backend", "label": "S09–S11 实现与审查", "sublabel": "Ticket、TDD、代码审查" },
+    { "id": "feedback", "lane": "late_feedback", "col": 4, "width": 190, "type": "external", "label": "Diagnose → Fix Ticket", "sublabel": "分类问题、补证据、重新实现" },
+    { "id": "ops_readiness", "lane": "late_gates", "col": 5, "width": 150, "type": "security", "label": "S12 就绪审查", "sublabel": "运行风险与证据", "tag": "HUMAN GATE" },
+    { "id": "e2e", "lane": "delivery", "col": 5, "width": 180, "type": "backend", "label": "S13 端到端验证", "sublabel": "先批计划，再测场景" },
+    { "id": "acceptance", "lane": "outcomes", "col": 5, "width": 180, "type": "security", "label": "S14 人工验收", "sublabel": "接受、补充或退回" }
   ],
   "edges": [
-    { "from": "idea", "to": "prototype", "label": "问题与目标", "role": "main", "variant": "emphasis" },
+    { "from": "idea", "to": "prototype", "label": "原型目标已确认", "role": "main", "variant": "emphasis" },
+    { "from": "idea", "to": "risk_summary", "label": "仅评估", "role": "branch" },
+    { "from": "idea", "to": "formal_design", "label": "选定正式设计", "role": "branch" },
     { "from": "prototype", "to": "prototype_review", "label": "交互原型", "role": "main" },
     { "from": "prototype_review", "to": "react", "label": "是 / 意图获批", "role": "main", "variant": "emphasis" },
     { "from": "react", "to": "parity", "label": "产品契约", "role": "main" },
@@ -235,7 +150,7 @@
     { "from": "parity", "to": "architecture", "label": "PASS / 已接受备注", "role": "main", "variant": "emphasis" },
     { "from": "architecture", "to": "architecture_refine", "label": "关键约束未知", "role": "branch", "variant": "dashed" },
     { "from": "architecture_refine", "to": "architecture", "label": "补充约束", "role": "branch", "variant": "dashed" },
-    { "from": "architecture", "to": "build_review", "label": "约束已确认 / Spec + Tickets", "role": "main", "variant": "emphasis", "route": "up-channel" },
+    { "from": "architecture", "to": "build_review", "label": "约束已确认 / Spec + Tickets", "role": "main", "variant": "emphasis" },
     { "from": "build_review", "to": "feedback", "label": "Review 阻断", "role": "error", "variant": "dashed" },
     { "from": "feedback", "to": "build_review", "label": "修复并补证据", "role": "branch", "variant": "dashed" },
     { "from": "build_review", "to": "ops_readiness", "label": "Review 通过", "role": "main", "variant": "emphasis" },
@@ -247,11 +162,11 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "Prototype First",
+      "title": "从问题到原型",
       "items": [
-        "可以自行制作 HTML Prototype，也可以从 Beautiful Ops Pages 或 Beautiful Ops Platform 开始",
-        "真实使用者先确认页面、流程、交互和状态",
-        "Prototype Review 未获批时回到原型继续调整"
+        "S00 确认用户和痛点，定义可观察的成功标准，比较方向并收敛到一个场景。",
+        "仅评估已有方案可在风险清单处结束。选择正式设计时，设计获批后接实施计划。",
+        "人确认原型目标后进入 S01；真实使用者在 S02 体验并决定是否批准。"
       ]
     },
     {
@@ -259,7 +174,7 @@
       "title": "UI + Constraints",
       "items": [
         "React + Mock 是可运行的产品契约，不是最终架构",
-        "Architecture 经过 Draft、Grill、Final，确认部署、安全与可靠性约束",
+        "S05 架构草案 → S06 逐项确认运行约束 → S07 定稿；S08 将约束写入规格。",
         "SDD / Spec 把已确认的约束转成精确行为和验收条件"
       ]
     },
@@ -267,7 +182,7 @@
       "dot": "rose",
       "title": "Evidence Closes The Loop",
       "items": [
-        "Parity、Code Review、Ops Readiness、E2E 和 Human Acceptance 都可能触发有边界的修复 Ticket",
+        "S09 拆任务，S10 通过测试驱动实现，S11 核对规范和需求。审查或端到端验证发现问题时退回修复。",
         "测试报告提供证据，但最终是否解决最初问题由 Human Acceptance 决定",
         "Done 代表可运行、可验证，不代表跳过人工门禁"
       ]

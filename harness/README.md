@@ -41,7 +41,7 @@ Harness
 → 定义执行协议与治理约束（上下文、规则、门禁、权限、反馈）
 
 Skills
-→ 提供具体执行能力（tdd、code-review、playwright…）
+→ 提供具体执行能力（superpowers:test-driven-development、code-review、playwright-cli）
 
 Claude Code / Codex / OpenCode / Gemini CLI / Cursor
 → 提供执行运行时

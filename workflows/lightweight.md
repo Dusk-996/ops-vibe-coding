@@ -2,20 +2,9 @@
 
 适合第一次体验、Demo 和低风险小工具。它减少文档深度和审查层级，但保留会改变架构与风险的人工决定。
 
-```text
-HTML Prototype
-→ Human Review
-→ React + Mock
-→ Prototype Parity
-→ Architecture Draft
-→ Lightweight Grill
-→ Architecture Final
-→ Minimal Spec
-→ Vertical Tickets
-→ Implement + Test
-→ Browser Workflow Test
-→ Human Acceptance
-```
+## 从一次本地巡检练习开始
+
+从「想做发布巡检工具」起步，先走 [S00](../docs/01-quick-start.md#s00)。值班同事需要从假数据里看出哪些 Deployment 副本数未齐，哪些缺少观测时间。比较纯文本摘要与只读页面，请使用者选一个场景，并写下怎样算验证成功。选择页面后进入 S01；只评估已有方案时，可以记录风险后结束。
 
 ## 最小执行方式
 

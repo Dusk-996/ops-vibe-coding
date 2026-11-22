@@ -1,50 +1,48 @@
 # Skill Map
 
-Skill 源码独立维护在 [personal-skill](https://github.com/luozijian1990/personal-skill)。本仓库只记录职责、固定依赖和使用边界，不复制实现。
-
-## 固定来源
-
-- 仓库修订：`dcce92018746c38a277ece323eef1347294df687`，不是浮动 main 或最新版。
-- 入口与资源清单：[skill-lock.json](skill-lock.json)，15 个 Skill、86 个资源文件，另有7份许可证/归属文件索引。
-- SHA-256 基于 Git blob 原始字节，先于 Windows CRLF 转换；部署/验证副本须按该字节取得，不能把换行差异误报为同一包已验证。
-- 本清单证明已取得和核对源码，不证明已安装、已执行、兼容或安全审计通过；实际结果见 [验证记录](../docs/reviews/2026-11-15-reuse-validation.md)。
+从 [Full Track](../workflows/full.md) 找当前阶段，从 [Quick Start](../docs/01-quick-start.md) 复制提示词。下表直达技能库的固定入口；S02 由真实使用者确认原型，S14 由业务使用者和风险负责人验收，这两个节点都可以由 AI 整理材料。
 
 ## 阶段与调用关系
 
-下列路径均相对于上述固定仓库；每项入口为 `skills/<名称>/SKILL.md`。完整资源摘要在锁定清单。
-
-| 阶段 | 名称 | 固定职责／依赖关系 |
+| 使用时机 | 技能入口 | 输入、配合方式与交接 |
 |---|---|---|
-| React + Mock | html-to-mui-react | 保真转换；交接 prototype-parity-review，交接不等于自动连跑 |
-| Parity | prototype-parity-review | 真实浏览器比较，不能用构建成功代替 |
-| Architecture | stack-selector | Draft 后停下；Grill 确认后才 Final |
-| Grill | grill-me | 显式调用 grilling |
-| Grill＋文档 | grill-with-docs | 显式调用 grilling 与 domain-modeling |
-| Spec | to-spec | 先确认测试 seam，再向已配置 tracker 输出；缺配置条件调用 setup-matt-pocock-skills |
-| Tickets | to-tickets | 消费批准 Spec，先确认拆分再输出；缺配置条件调用 setup-matt-pocock-skills |
-| Implementation | tdd | 对已确认 Ticket 实施；审查属于后续阶段 |
-| Review | code-review | 有效比较点＋非空已提交 diff；Standards、Spec 两个并行子 Agent；缺 tracker 配置条件调用 setup |
-| Ops | ops-readiness-review | 检查适用运行风险与证据，不代替人的接受 |
-| E2E | playwright-e2e-debug-report | 先批准任务和环境，执行依赖 playwright-cli |
+| S00 探索 | <a id="devops-brainstorming"></a>[devops-brainstorming](https://github.com/Dusk-996/skills-manager-backup/blob/1c7d8f29ab347843ef7007338308ca52f317ef58/devops-brainstorming/SKILL.md) | 已有候选方向且有假设要质询时用 Grill，范围需收敛时用 Refinement。讨论可结束于风险清单。进入原型由人确认目标。 |
+| S00 正式实施设计的后继 | <a id="writing-plans"></a>[writing-plans](https://github.com/Dusk-996/skills-manager-backup/blob/1c7d8f29ab347843ef7007338308ca52f317ef58/external-skills/superpowers/skills/writing-plans/SKILL.md) | 面向实施的设计获批并按技能要求落盘后，原生出口交给 writing-plans 制定计划。原型探索路径见 [S00](../workflows/full.md#s00)。 |
+| S01 原型 | <a id="frontend-design"></a>[frontend-design](https://github.com/Dusk-996/skills-manager-backup/blob/1c7d8f29ab347843ef7007338308ca52f317ef58/frontend-design/SKILL.md) | 从零做 HTML 原型时使用。已有可复用原型则调整关键流程和 Mock 数据。 |
+| S03 React + Mock | <a id="html-to-mui-react"></a>[html-to-mui-react](https://github.com/Dusk-996/skills-manager-backup/blob/1c7d8f29ab347843ef7007338308ca52f317ef58/html-to-mui-react/SKILL.md) | 消费 S02 批准的页面、流程和视口；完成转换后单独发起 S04。 |
+| S04 原型一致性 | <a id="prototype-parity-review"></a>[prototype-parity-review](https://github.com/Dusk-996/skills-manager-backup/blob/1c7d8f29ab347843ef7007338308ca52f317ef58/prototype-parity-review/SKILL.md) | 在真实浏览器比较关键操作、视觉和状态；出现有条件通过的偏差时交给人决定。 |
+| S05 / S07 架构 | <a id="stack-selector"></a>[stack-selector](https://github.com/Dusk-996/skills-manager-backup/blob/1c7d8f29ab347843ef7007338308ca52f317ef58/stack-selector/SKILL.md) | 首次从 Mock 生成草案。取得 S06 人工决定后，第二次读取同一草案定稿。 |
+| S06 运行约束 | <a id="grilling"></a>[grilling](https://github.com/Dusk-996/skills-manager-backup/blob/1c7d8f29ab347843ef7007338308ca52f317ef58/grilling/SKILL.md) | 围绕草案的开放问题逐项询问。有权人员给出会影响架构的决定。此入口已整合旧的 grill-me 和 grill-with-docs。 |
+| S06 记录术语或决策 | <a id="domain-modeling"></a>[domain-modeling](https://github.com/Dusk-996/skills-manager-backup/blob/1c7d8f29ab347843ef7007338308ca52f317ef58/domain-modeling/SKILL.md) | 需要同步维护领域词汇表或架构决策记录（ADR）时，与 grilling 配合。 |
+| S08 规格 | <a id="to-spec"></a>[to-spec](https://github.com/Dusk-996/skills-manager-backup/blob/1c7d8f29ab347843ef7007338308ca52f317ef58/to-spec/SKILL.md) | 确认测试边界后形成 Spec；按项目约定登记，范围和验收条件由人确认。 |
+| S09 任务 | <a id="to-tickets"></a>[to-tickets](https://github.com/Dusk-996/skills-manager-backup/blob/1c7d8f29ab347843ef7007338308ca52f317ef58/to-tickets/SKILL.md) | 基于批准的 Spec 提出纵向任务，确认拆分与阻塞关系后写入项目跟踪系统。 |
+| S08 / S09 / S11 首次配置 | <a id="setup-matt-pocock-skills"></a>[setup-matt-pocock-skills](https://github.com/Dusk-996/skills-manager-backup/blob/1c7d8f29ab347843ef7007338308ca52f317ef58/setup-matt-pocock-skills/SKILL.md) | 缺少任务跟踪等必需配置时使用。现有配置优先；本地练习选 Local Markdown。 |
+| S10 实现 | <a id="test-driven-development"></a>[test-driven-development](https://github.com/Dusk-996/skills-manager-backup/blob/1c7d8f29ab347843ef7007338308ca52f317ef58/external-skills/superpowers/skills/test-driven-development/SKILL.md) | 在确认的 Ticket 上做红→绿→重构和复验。调用名用 Superpowers 命名空间，见下文。 |
+| S11 代码审查 | <a id="code-review"></a>[code-review](https://github.com/Dusk-996/skills-manager-backup/blob/1c7d8f29ab347843ef7007338308ca52f317ef58/code-review/SKILL.md) | 向两个并行审查者提供有效基点及非空的已提交差异，分别检查仓库规范、Spec 符合度。 |
+| S12 运维就绪 | <a id="ops-readiness-review"></a>[ops-readiness-review](https://github.com/Dusk-996/skills-manager-backup/blob/1c7d8f29ab347843ef7007338308ca52f317ef58/ops-readiness-review/SKILL.md) | 检查适用运行风险及证据，风险接受交给有权人员。 |
+| S13 E2E | <a id="playwright-e2e-debug-report"></a>[playwright-e2e-debug-report](https://github.com/Dusk-996/skills-manager-backup/blob/1c7d8f29ab347843ef7007338308ca52f317ef58/playwright-e2e-debug-report/SKILL.md) | 先组织待批测试计划；获准后编排浏览器操作、问题分流与报告。 |
+| S13 浏览器执行 | <a id="playwright-cli"></a>[playwright-cli](https://github.com/Dusk-996/skills-manager-backup/blob/1c7d8f29ab347843ef7007338308ca52f317ef58/playwright-cli/SKILL.md) | 获批测试计划中的实际浏览器操作使用此工具，保存原始证据。 |
 
-## 四个间接／条件节点
+Superpowers 包内条目的源名称分别是 `test-driven-development` 和 `writing-plans`。采用 Superpowers 命名空间的运行时显式使用 `$superpowers:test-driven-development` 和 `$superpowers:writing-plans`。S10 选择前者，因为它在绿色测试保护下重构。技能库另有 `tdd`，其重构约定在审查阶段。
 
-| 名称 | 关系与边界 |
-|---|---|
-| grilling | Grill 的逐题确认，不把假设当人已确认 |
-| domain-modeling | grill-with-docs 使用的领域术语及决策文档 |
-| setup-matt-pocock-skills | 缺配置才运行；默认倾向远程 tracker，必须先选择 Local Markdown 才能用于本轮本地任务 |
-| playwright-cli | E2E 执行能力；源码包含 npm 全局安装或 init 最新版的回退，本轮不触发；安装另需明确范围与版本 |
+## 固定来源与复核
 
-模板提及 triage、qa、wayfinder、codebase-design 不构成必调用依赖，不无限扩大闭包。未执行入口不列为已验证。
+技能来源为 [Dusk-996/skills-manager-backup 的固定提交](https://github.com/Dusk-996/skills-manager-backup/tree/1c7d8f29ab347843ef7007338308ca52f317ef58)，修订为 `1c7d8f29ab347843ef7007338308ca52f317ef58`。[skill-lock.json](skill-lock.json) 记录 16 个入口、对应目录内的 88 个资源文件，以及 6 个许可或归属条目。锁定范围包括模板、测试材料和说明文档。运行环境、浏览器二进制和人工批准需要在使用时另行核对。
 
-## 本地采用与副作用
+按提交中 Git blob 的原始字节计算 SHA-256，避免 Windows 检出时的换行转换影响摘要。已有本地技能仓库时，可在其根目录用 **Bash / Git Bash** 抽查一个入口，和锁中同一路径的 `sha256` 对照：
 
-1. 在全新或起点已记录的验证目录取得固定源码；保存获取命令、修订与摘要。失败时保存诊断，使用固定版本导出/离线包，不改用未知镜像或最新版。
-2. 先配置 Local Markdown tracker：Spec 为 `.scratch/<feature>/spec.md`，Tickets 为 `.scratch/<feature>/issues/<NN>-<slug>.md`。只有本地允许路径可写，不创建 GitHub Issue。
-3. 显式点名 `$to-spec`、`$to-tickets` 等；这些入口的元数据不允许隐式调用。记录实际加载路径，遇到同名全局 Skill 冲突先排除，不用“应该加载了”作证据。
-4. seam、Spec 和拆分确认是人工检查点；本次执行授权不等于未来未知产物已被确认。未确认可以生成明确草案，不能发布成已批准。
-5. code-review 的 `git diff <base>...HEAD`不包含未提交工作区；空 diff、无效 base 或缺必需双 Agent 能力是前置阻断，不能替换为人工阅读后仍记原生调用通过。
-6. 不修改用户全局 Skill、不自动安装、不暴露凭证、不执行生产命令。本轮仅验证选定的三个入口，其余做静态来源核对。
+```bash
+git cat-file blob 1c7d8f29ab347843ef7007338308ca52f317ef58:grilling/SKILL.md | sha256sum
+```
 
-Skill 是执行单元，Workflow 定义编排与门禁。角色或审批不明确时向采用项目维护者求助，不能让 Agent 代签。
+许可和归属按来源核对：
+
+- `frontend-design` 附 Apache-2.0 文本，入口另记 ECC 检查表来源；Superpowers 包附 MIT 许可与作者署名。[Frontend 许可](https://github.com/Dusk-996/skills-manager-backup/blob/1c7d8f29ab347843ef7007338308ca52f317ef58/frontend-design/LICENSE.txt) · [Superpowers 许可](https://github.com/Dusk-996/skills-manager-backup/blob/1c7d8f29ab347843ef7007338308ca52f317ef58/external-skills/superpowers/LICENSE)
+- `prototype-parity-review` 和 `ops-readiness-review` 的 README 保留了原作者的 MIT 声明，其指向原仓库根许可的相对路径在此备份里缺少目标。锁中保留两份声明的摘要，其他技能的适用条款按其原来源核实。[Parity 归属](https://github.com/Dusk-996/skills-manager-backup/blob/1c7d8f29ab347843ef7007338308ca52f317ef58/prototype-parity-review/README.md) · [Ops 归属](https://github.com/Dusk-996/skills-manager-backup/blob/1c7d8f29ab347843ef7007338308ca52f317ef58/ops-readiness-review/README.md) · [备份的恢复与许可说明](https://github.com/Dusk-996/skills-manager-backup/blob/1c7d8f29ab347843ef7007338308ca52f317ef58/docs/RESTORE.md)
+
+## 本地采用
+
+1. 取得固定提交或对应的离线包，核对入口和资源摘要。显式点名所采用的技能，记录实际加载路径，以便识别同名的其他版本。
+2. 本地练习使用 Local Markdown tracker。Spec 和 Tickets 分别放在 `.scratch/<feature>/spec.md` 和 `.scratch/<feature>/issues/<NN>-<slug>.md`。已有跟踪系统时依项目约定执行。
+3. 记录实际命令、输出、人工决定和未验证项。S11 的三点 diff 覆盖比较基点与 HEAD 的已提交变更；S13 的浏览器环境和允许操作来自已批准的测试计划。
+4. 对照版本阅读验证记录。[2026-11-15 的历史记录](../docs/reviews/2026-11-15-reuse-validation.md) 对应此前使用的技能库和修订。

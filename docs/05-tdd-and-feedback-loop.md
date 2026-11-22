@@ -54,4 +54,4 @@ Stop Condition
 ## 相关文档
 
 - [Full Track §10~11](../workflows/full.md)：TDD 与 Code Review
-- [Skill Map](../references/skills.md)：`tdd`、`code-review`
+- [Skill Map](../references/skills.md)：`superpowers:test-driven-development`、`code-review`

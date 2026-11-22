@@ -1,63 +1,25 @@
 # Ops Vibe Coding
 
-> Operations-first workflow for turning infrastructure ideas into tested software.
+面向熟悉运维、想借助 AI 开发工具的工程师。从一次值班遇到的问题开始，经过原型、架构、实现与验收，把一个想法做成可验证的软件。
 
-面向 SRE、DevOps、Platform Engineer 和运维开发的 AI 原生软件开发工作流：从一个业务问题或可交互原型开始，经过产品确认、架构决策、规格定义、TDD、运维就绪审查和真实浏览器验收，把运维想法变成可运行、可验证的软件。
+## 从这里开始
 
-你不需要先会写前端，也不需要一开始就能写出完整 PRD。不会制作原型时，可以直接从 [Beautiful Ops Pages](https://github.com/luozijian1990/Beautiful-Ops-Pages) 或 [Beautiful Ops Platform](https://github.com/luozijian1990/Beautiful-Ops-Platform) 选择接近的页面，改成自己的业务场景，再沿着本项目的流程继续完成工程化。
+| 你要做什么 | 从哪里起步 |
+|---|---|
+| **第一次做本地 Demo**，用假数据验证一个流程 | 打开 [Quick Start 的 S00](docs/01-quick-start.md#s00)，选一个有价值的场景，再按 [轻量路线](workflows/lightweight.md) 完成练习。 |
+| **团队长期维护，或涉及真实基础设施变更** | 走 [完整路线 S00–S14](workflows/full.md#s00)。例如，真的修改 Deployment 涉及权限、审计与未知结果处理，参见 [Restart 教学案例](examples/kubernetes-deployment-restart/README.md)。 |
 
-> [!TIP]
-> 对非前端背景的运维工程师来说，现成原型是表达产品意图的起点，不是最终产品。先让真实使用者看见、点击并确认“是不是想要的东西”，再投入正式开发。
-
-## 这是什么
-
-Ops Vibe Coding 不是新的 Agent Framework、Prompt 合集或后台模板。它是一套 `operations-first` 方法，把原型、架构、Spec、实现和验收连接成一条有明确产物、反馈和人工门禁的 Golden Path。
-
-它重点解决一个实际问题：
-
-> 一个懂运维业务、但未必具备产品设计和完整软件开发经验的人，如何在 AI Agent 协助下，把想法逐步变成真正可用的软件？
-
-在这条路径里：
-
-- HTML Prototype 是低成本的可执行需求；
-- React + Mock 是可运行的产品契约；
-- Architecture 确定系统组成和运行边界；
-- Spec 确定系统精确行为与验收条件；
-- 测试、审查、E2E 和人工验收构成证据闭环。
-
-## 不会做原型？从现成的开始
-
-两个公开原型库为不同粒度的运维想法提供起点：
-
-| 原型库 | 适合的起点 | 可以用它做什么 |
-|---|---|---|
-| [Beautiful Ops Pages](https://github.com/luozijian1990/Beautiful-Ops-Pages) | 单页功能或具体任务 | 参考 Kubernetes、主机、网络、告警、Incident、Trace 等单页交互，改写文案、Mock 数据和操作流程 |
-| [Beautiful Ops Platform](https://github.com/luozijian1990/Beautiful-Ops-Platform) | 完整平台或复杂工作台 | 参考完整导航、信息架构、跨区域工作流和平台级页面组织，改造成自己的运维平台原型 |
-
-推荐做法：
-
-1. 写清楚谁遇到了什么问题，以及怎样算解决；
-2. 在两个原型库中选择最接近的页面或平台；
-3. 让 AI Agent 保留其视觉语言，替换业务文案、Mock 数据和场景交互；
-4. 交给真实使用者体验并调整，直到产品意图获得批准；
-5. 将批准后的原型转成 React + Mock，再进入架构与实现阶段。
-
-> [!IMPORTANT]
-> 两个原型库中的操作和数据均为 Mock。它们用于探索与确认产品意图，不连接真实生产系统，也不代表已经满足安全或生产就绪要求。
-
-原型确认后的工程化转换遵守一个原则：
-
-> 组件库服从已经批准的原型，而不是让原型服从组件库。
+先说清楚谁遇到了什么问题、现在怎么做、怎样算解决。S00 可以停在风险清单；决定做原型时，由人选定一个目标。没有前端经验，可以从 [单页原型库](https://github.com/luozijian1990/Beautiful-Ops-Pages) 或 [平台原型库](https://github.com/luozijian1990/Beautiful-Ops-Platform) 选已有页面，用 Mock 数据替换成自己的场景。
 
 ## 完整流程
 
-![Ops Vibe Coding 完整工作流，覆盖 S01–S14、人工门禁和反馈路径](docs/diagrams/ops-vibe-coding-workflow.svg)
+![Ops Vibe Coding 完整工作流，覆盖 S00–S14、人工门禁和反馈路径](docs/diagrams/ops-vibe-coding-workflow.svg)
 
-[查看 SVG 大图](docs/diagrams/ops-vibe-coding-workflow.svg) · [编辑 draw.io 源文件](docs/diagrams/ops-vibe-coding-workflow.drawio) · [S01–S14 完整阶段说明](workflows/full.md)
+[查看 SVG 大图](docs/diagrams/ops-vibe-coding-workflow.svg) · [编辑 draw.io 源文件](docs/diagrams/ops-vibe-coding-workflow.drawio) · [S00–S14 完整阶段说明](workflows/full.md)
 
 图中蓝色实线表示主路径，黄色菱形标记判断或人工批准，红色虚线表示退回与修复。阶段编号与 Full Track 对应，具体放行条件及回退规则以阶段说明为准。
 
-[Archify 交互版流程图](docs/ops-vibe-coding-workflow.html) 提供主题切换、缩放、搜索和阶段导览。请下载 HTML 后用浏览器打开，当前检查限制见[交互图检查](docs/reviews/2026-11-15-reuse-validation.md#交互图检查)。
+[Archify 交互版流程图](docs/ops-vibe-coding-workflow.html) 提供主题切换、缩放、搜索和阶段导览。请下载 HTML 后用浏览器打开，本次核验见[调整验证记录](docs/reviews/2026-11-22-s00-workflow.md)。
 
 Parity、Review、Ops Readiness 或 E2E 发现问题后，都要回到对应阶段修正并重新提供证据。人工验收完成后，将验收记录交给实际项目的生产发布流程。
 
@@ -65,39 +27,22 @@ Parity、Review、Ops Readiness 或 E2E 发现问题后，都要回到对应阶�
 
 | 阶段 | 回答的问题 | 关键产物 | 人工门禁 |
 |---|---|---|---|
-| Prototype | 用户如何使用？ | HTML Prototype、批准记录 | 批准页面、流程与交互 |
+| 意图与 Prototype | 先验证哪个场景，用户如何使用？ | S00 简报、HTML Prototype、批准记录 | 人先选场景，再实际体验并确认原型 |
 | React + Mock | 产品契约是否可执行？ | React App、Mock API/Data | Parity 报告通过 |
 | Architecture | 系统由什么组成？ | Draft、Grill 决策、Final | 确认运行与风险约束 |
-| Spec + Tickets | 系统精确如何工作？ | Spec、纵向切片 Tickets | 批准范围与验收条件 |
-| TDD + Review | 实现是否正确？ | 代码、测试、Review | 阻断问题解决 |
-| Ops + E2E | 能否安全运行并解决问题？ | Readiness、E2E 报告 | 批准测试边界并最终验收 |
+| Spec、Tickets 与 TDD | 一个可独立验收的任务怎样实现？ | Spec、Ticket、代码、测试结果 | 确认范围、验收条件和测试边界 |
+| 代码与运维审查 | 实现满足规格吗，失败后能恢复吗？ | Code Review、Ops Readiness 报告 | 关闭阻断问题，由有权人员处理剩余风险 |
+| E2E 与人工验收 | 真实流程是否解决最初的问题？ | 测试计划、浏览器证据、验收决定 | 批准测试范围，按实际证据接受或退回 |
 
 前端只能暴露能力候选，不能直接决定 Redis、MQ、Worker、WebSocket 或微服务：
 
 > UI 告诉我们系统需要做什么；Grill 告诉我们系统必须在什么约束下运行；两者共同决定架构。
 
-## 适合谁
+## 按需查阅
 
-- 打算学习 Vibe Coding、希望借助 AI Agent 把运维想法变成软件，但不知道从哪一步开始的运维工程师；
-- 熟悉运维业务，但不一定具备产品、前端或全栈开发经验的人；
-- 正在建设 Kubernetes、监控告警、Incident、AIOps 或远程执行工具的团队；
-- 希望让 Claude Code、Codex、OpenCode 等 Agent 参与开发，同时保留人工决策门禁的人；
-- 需要把 Demo 逐步演进为长期维护或生产使用的软件的人。
-
-## 从这里开始
-
-- **懂运维、不熟悉开发的新人**：从 [Quick Start](docs/01-quick-start.md) 的准备检查和六组导航开始。每步都有输入、AI 指令、产物、检查、停手和下一步；遇到问题查 [流程问题定位](docs/09-troubleshooting.md)。
-- **换会话或接手任务**：先核对 [交接记录](harness/examples/handoff.example.md) 的当前阶段、原始门禁状态、证据和阻断，再继续。
-- 第一次体验、Demo 或低风险小工具：阅读 [Quick Start](docs/01-quick-start.md)，走 [Lightweight Track](workflows/lightweight.md)。
-- 想直接查看 Full Track 每个阶段会留下什么：阅读 [Kubernetes Deployment Restart Golden Path](examples/kubernetes-deployment-restart/README.md) 教学示例。
-- 想让 Codex、Claude Code、OpenCode 等 Agent 在多个 Ticket 和多个 Session 中稳定遵循这套流程：阅读 [Harness Engineering](harness/README.md)。
-- 团队工具、长期维护、生产或敏感操作：直接走 [Full Track](workflows/full.md)。
-- 想理解每个阶段为什么这样设计：阅读阶段深潜系列 [02](docs/02-prototype-first.md) → [03](docs/03-architecture-and-sdd.md) → [04](docs/04-context-engineering.md) → [05](docs/05-tdd-and-feedback-loop.md) → [06](docs/06-ops-readiness.md) → [07](docs/07-e2e-and-human-acceptance.md)。
-- 快速消疑：查看 [FAQ](docs/08-faq.md)。
-- 想知道每一步留下什么：查看 [Artifact Map](references/artifacts.md)。
-- 想知道各阶段如何复用现有能力：查看 [Skill Map](references/skills.md)。
-
-Lightweight Track 会缩短文档与审查深度，但不会跳过产品意图与架构约束的人工确认，也不代表生产就绪。涉及生产基础设施、Secret、远程执行、多租户、审批、长任务或明显业务风险时，应升级到 Full Track。
+- 换会话或接手 Ticket，先读[交接记录](harness/examples/handoff.example.md)；多会话协作见 [Harness](harness/README.md)。
+- 在当前阶段查[产物索引](references/artifacts.md)、[技能与固定版本](references/skills.md)或[流程问题定位](docs/09-troubleshooting.md)。
+- 按主题深入阅读：[原型](docs/02-prototype-first.md)、[架构与 Spec](docs/03-architecture-and-sdd.md)、[上下文](docs/04-context-engineering.md)、[TDD](docs/05-tdd-and-feedback-loop.md)、[运维就绪](docs/06-ops-readiness.md)、[E2E 与人工验收](docs/07-e2e-and-human-acceptance.md)。术语见 [FAQ](docs/08-faq.md)。
 
 ## 核心原则
 
@@ -107,7 +52,7 @@ Lightweight Track 会缩短文档与审查深度，但不会跳过产品意图�
 
 新人负责按任务生成/核对产物、记录证据并在缺输入、权限或结果未知时停手；维护者确认架构、Spec 和测试范围，资深人员复核技术与运行风险，有权发布人另行批准上线。每个采用项目须把这些角色绑定到实际人员，不能由 Agent 代签。
 
-首轮目标是 Windows Codex CLI 0.169.0 的文档与 Skill 阶段采用；实际执行、阻断和未验证范围见 [验证记录](docs/reviews/2026-11-15-reuse-validation.md)。这不是完整 TDD、应用构建、浏览器 E2E 或生产部署的已验证声明，也不覆盖其他系统或运行时。
+本次[工作流验证记录](docs/reviews/2026-11-22-s00-workflow.md)列出本地样本、实际调用和未验证范围。旧版本的采用与图稿检查见 [2026-11-15 记录](docs/reviews/2026-11-15-reuse-validation.md)。
 
 ### 工作原则
 
@@ -128,6 +73,6 @@ Lightweight Track 会缩短文档与审查深度，但不会跳过产品意图�
 | `ops-vibe-coding` | 维护方法论、工作流、教程、引用和示例，定义 Operations-first Golden Path |
 | [Beautiful Ops Pages](https://github.com/luozijian1990/Beautiful-Ops-Pages) | 提供可直接体验和改写的单页功能原型 |
 | [Beautiful Ops Platform](https://github.com/luozijian1990/Beautiful-Ops-Platform) | 提供可直接体验和改写的完整运维平台原型 |
-| [`personal-skill`](https://github.com/luozijian1990/personal-skill) | 独立维护流程所引用的可执行 Skills |
+| [skills-manager-backup](https://github.com/Dusk-996/skills-manager-backup) | 提供工作流引用的技能版本，具体入口及依赖见 [Skill Map](references/skills.md) |
 
 本仓库引用现有原型和 Skills，但不复制它们的实现。首版也刻意不提供 CLI、Agent Framework、低代码平台或大量 Demo；目标是先让一条面向运维场景的完整路径清楚、可执行、可验证。

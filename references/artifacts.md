@@ -2,6 +2,7 @@
 
 | 阶段 | 最小产物 | 下一阶段如何消费 |
 |---|---|---|
+| [S00 澄清问题与原型目标](../workflows/full.md#s00) | 简报：目标用户、痛点、成功标准、候选与取舍、单一场景、范围和待验证项；注明人的决定 | 人选定场景后交 S01；只评风险时交回风险与待决事项。面向实施的正式设计遵循技能原生审批和计划交接。 |
 | S01 Explore | `prototype/*.html` | 人工体验页面与流程 |
 | S02 Prototype Review | `prototype/approval.md` | 固定页面、Flow、viewport 和模式 |
 | S03 React + Mock | 可运行前端、Mock API/Data | Parity 检查并暴露能力候选 |

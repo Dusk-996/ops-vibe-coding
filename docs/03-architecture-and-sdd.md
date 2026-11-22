@@ -48,4 +48,4 @@ React Mock 完成之后，如何不靠脑补得到架构与规格：UI 暴露能
 
 - [Full Track §5~9](../workflows/full.md)：Draft、Grill、Final、Spec、Tickets
 - [Artifact Map](../references/artifacts.md)：`stack-selection.draft.md`、`stack-selection.md`、Spec、Tickets
-- [Skill Map](../references/skills.md)：`stack-selector`、`grill-me`、`to-spec`、`to-tickets`
+- [Skill Map](../references/skills.md)：`stack-selector`、`grilling`、`to-spec`、`to-tickets`

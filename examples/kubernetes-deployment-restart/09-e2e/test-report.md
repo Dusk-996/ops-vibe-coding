@@ -1,27 +1,25 @@
-# E2E Test Report
+# S13 Restart 浏览器测试报告
 
-> **Real Execution Status: SKIPPED — no application or test environment。** 没有真实浏览器、集群、截图或 trace。
-> Example Outcome: PASS 为教学占位，不是执行结果。
+**本地 Mock 已执行，七条已批准的用例全部通过。** 目标为 `lab / staging / checkout`；实现修订 `dbfd4fa`。2026-11-22 10:30:39–10:30:46 UTC，Windows、Node `v26.13.1`、Chrome `157.0.8103.79`、Playwright Core `1.56.1`。各用例使用独立的 127.0.0.1 随机端口、内存服务和浏览器上下文。初版计划由维护者答复“批准本地 Mock 测试计划”；双窗口和原型刷新经第二次答复“修复两处并批准补充测试（推荐）”加入。[获批计划](test-task.md)
 
-## 预期 Workflow
-
-登录 → Deployment Detail → Restart → 核对目标/确认 → 提交中 → 请求已提交（不表示 rollout 完成）→ 同一操作 ID 的记录。
-
-## 待验证场景
-
-| 场景 | 预期行为 | 真实执行 |
+| 用例和实际步骤 | 预期及实际观测 | 结果 |
 |---|---|---|
-| 有权用户确认 | Submitted 仅在 API 接受且最终审计确认时显示 | SKIPPED |
-| 取消／未授权 | 不 mutation；拒绝记录不泄漏凭证 | SKIPPED |
-| API 超时 | Unknown、保留占用、不重试，显示核验指引 | SKIPPED |
-| 同 ID 重放／同目标新 ID | 返回已有记录或冲突，不再发送 PATCH | SKIPPED |
-| 意图存储失败 | 不调用 Kubernetes，明确未发送及证据限制 | SKIPPED |
-| API 接受后最终审计未确认 | 分开说明观测与持久化，不显示普通成功 | SKIPPED |
-| 原进程崩溃／人工更正失败 | 不恢复发送、不盲目解锁 | SKIPPED |
-| 查询／核验交接 | 授权范围、ID、证据、批准和维护事务可追溯 | SKIPPED |
+| cancel · 打开确认框并取消 | 回到详情、无结果；API 请求 0，模拟变更 0 | PASS |
+| accepted · 选择接受、确认、查记录 | POST 200，页面“请求已提交”，rollout 尚未验证；同一 ID 的 GET 200，记录 SUBMITTED，模拟变更 1 | PASS |
+| timeout · 选择超时、确认、查记录、刷新、再查 | POST 504；显示“结果待核验”，原 ID 保留，两次查询及刷新只发 GET，重启禁用，模拟变更 1 | PASS · [截图](evidence/timeout.png) |
+| rejected · 选择明确拒绝、确认、查记录 | POST 422；页面“请求被拒绝”，同一 ID 的 GET 返回 REJECTED，模拟变更尝试 1 | PASS |
+| audit-unconfirmed · 选择最终审计未确认、确认、查记录、刷新 | POST 503；UI 单列“最终审计待核验”，原记录 SUBMITTING / accepted / unconfirmed，重启禁用，模拟变更 1 | PASS · [截图](evidence/audit-unconfirmed.png) |
+| conflict-windows · 两个标签打开同一目标，先超时、再从另窗确认并刷新 | 两次 POST 分别返回 504 和 409，仅一次模拟变更；第二窗显示“本次未提交”及两个不同 ID。刷新和查看记录均按占用 ID 只读查询 | PASS · [截图](evidence/conflict.png) |
+| prototype-reload · 静态原型超时后刷新同一标签并查记录 | 恢复同一原型 ID、维持 UNKNOWN 和阻重；未发 HTTP API 请求，模拟服务计数 0 | PASS · [截图](evidence/prototype-reload.png) |
 
-真实项目的报告必须有批准 Test Plan、实际步骤/时间/对象版本/环境、原始输出、截图或 trace 及限制。上述表格不是证据。
+**证据**包括[每条请求的方法、ID、响应码与计数](evidence/run.json)、[逐步浏览器断言](../02-react-mock/browser-test.mjs)和[S04 两个视口的原型／React 对照](../03-parity/prototype-parity.md)。官方 `@playwright/cli 0.1.25` 另在同一修订执行了 [CLI 脚本](cli-check.js)，确认取消零 API、一次 POST、一次 GET，服务计数为 1。[CLI 回执](evidence/cli-run.json)
 
-任何真实 mutation、维护、故障注入都需明确目标、影响范围、恢复方案和授权。本例未执行这些操作。
+**复现**按 [Mock 运行说明](../02-react-mock/contract.md)安装后运行 `npm run build`、`npm test` 与 `npm run e2e`（本轮均退出 0）。新运行生成独立的 `dist/e2e-*/run.json` 与截图；某项失败会记录已观察到的调用并标 FAIL，尚未执行的项目列为 SKIPPED 和对应原因。经批准修复前的[双窗失败](../07-implementation/red-conflict-windows.json)和[原型刷新失败](../07-implementation/red-prototype-reload.json)保留原状。若已安装相同版本 CLI，也可启动服务后运行以下三条命令复核其独立路径（从 Mock 目录执行）。
 
-下一步：[Human Acceptance](../10-acceptance/human-acceptance.md)。实际产品的完整流程仍未验证。
+```sh
+playwright-cli -s=restart-proof open http://127.0.0.1:4173 --browser=chrome
+playwright-cli -s=restart-proof run-code --filename=../09-e2e/cli-check.js
+playwright-cli -s=restart-proof close
+```
+
+本地已批准的七项无跳过。实际 SSO、真实 Kubernetes RBAC 与 PATCH、rollout 结果、数据库审计持久化、进程崩溃及有权人员恢复均未在此次授权和环境内验证；这些决定仍需等价环境与责任人证据。[运维风险](../08-review/ops-readiness.md) · [S14 人工验收](../10-acceptance/human-acceptance.md)

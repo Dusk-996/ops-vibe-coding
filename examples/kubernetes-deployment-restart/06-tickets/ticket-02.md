@@ -1,6 +1,6 @@
 # Ticket 02 — 查看记录并支持受控核验交接
 
-> 教学纵向切片。依赖 [Ticket 01](ticket-01.md) 的操作记录，实际实现 NOT_EXECUTED。
+> 依赖 [Ticket 01](ticket-01.md) 返回的操作 ID 和记录。R2/R3 本地已交付按 ID 查看以及刷新后保持未知、阻止重发。使用 [timeout 的网络记录](../09-e2e/evidence/run.json) 验收；跨权限查询、持久化和人工恢复为生产待验证项。
 
 ## 用户价值与输入
 

@@ -45,3 +45,7 @@ E2E 的核心对象是 **User Workflow（用户工作流）**，不是 UI Elemen
 - [Full Track §13~14](../workflows/full.md)：E2E 与 Human Acceptance、回退规则
 - [Artifact Map](../references/artifacts.md)：E2E 报告与验收证据
 - [Skill Map](../references/skills.md)：`playwright-e2e-debug-report`
+
+## 复查报告与决定
+
+用 [S13 判据](../references/stage-rubrics.md#s13)查批准、执行和结论能否逐项对上。业务使用者可凭[本地测试报告](../examples/kubernetes-deployment-restart/09-e2e/test-report.md)体验三条核心路径，再按 [S14 判据](../references/stage-rubrics.md#s14)记录实际决定或待确认项。

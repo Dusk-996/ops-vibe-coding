@@ -1,25 +1,16 @@
-# TDD Evidence
+# S10 单目标 Restart 实现与 TDD 证据
 
-> **Actual Status: NOT_EXECUTED。** 仓库无应用，以下为预期测试名称/证据类别，不是真实命令输出。
-
-输入：[Ticket 01](../06-tickets/ticket-01.md)、[Ticket 02](../06-tickets/ticket-02.md)。
+实际运行覆盖 [Ticket 01](../06-tickets/ticket-01.md) 的提交、占用及结果语义和 [Ticket 02](../06-tickets/ticket-02.md) 的本地记录查询。实物为[内存状态机](../02-react-mock/mock.mjs)、[HTTP 服务](../02-react-mock/server.mjs)、[React 交互](../02-react-mock/app.jsx)、[单元测试](../02-react-mock/mock.test.mjs)与[浏览器断言](../02-react-mock/browser-test.mjs)。
 
 ## RED → GREEN → REFACTOR
 
-真实项目先保存为缺失行为而失败的测试输出，再最小实现，最后在不改变约束下重构。每轮绑定代码提交/未提交差异、环境、时间、实际命令、退出码与原始结果。不能把依赖错误当成业务 RED。
+| 轮次及修订 | 实际命令与结果 |
+|---|---|
+| RED · `0a6bc82` | 在 Mock 目录执行 `node --test --test-reporter=spec mock.test.mjs`，退出 1，6 条中 4 失败。只会返回成功的初始实现分别将预期 504/403/503 返回为 200，又将明确拒绝写成 SUBMITTED。[原始单测输出](unit-red.txt) |
+| GREEN · `f99380a` | 同一组预期在内存状态机实现后执行 `npm test`，退出 0，6/6。验证同 ID 重放、其他目标拒绝、未知占用、审计未确认与明确拒绝。取消的 UI 行为由浏览器验证。 |
+| 重构、补充 RED · `2be32a1` | 前后端共用 [target.mjs](../02-react-mock/target.mjs)，修正初始计数用例名称。审查后经批准分别执行 `npm run e2e -- conflict-windows` 与 `npm run e2e -- prototype-reload`，分别退出 1。双窗口还把原操作状态当作本次结果，原型刷新时结果面板消失。[双窗口失败回执](red-conflict-windows.json) · [原型刷新失败回执](red-prototype-reload.json) |
+| 修复、最终复验 · `dbfd4fa` | 修复后的完整运行 `npm run build` 退出 0、`npm test` 退出 0、`npm run e2e` 退出 0。六条单测、七条浏览器用例及两个视口的选定对照全部完成。[最终单测输出](unit-green.txt) · [浏览器回执](../09-e2e/evidence/run.json) |
 
-待实现用例包括：
+2026-11-22 在 Windows、Node `v26.13.1`、Chrome `157.0.8103.79` 复验。两个文本文件来自固定实现版本的 Node spec reporter；RED 堆栈仅将本机绝对路径缩成文件名。从干净检出依[本地运行说明](../02-react-mock/contract.md)安装依赖即可复验当前修订；旧 RED 可在独立检出相应提交后运行表中命令。
 
-- 未授权和取消不调用 Kubernetes；意图持久化先于 PATCH。
-- 各层 mutation 至多发送一次；超时 Unknown 且不重试。
-- 同 ID 重放/改绑、同目标不同 ID 并发与跨进程占用。
-- 明确接受＋最终审计确认只表示 Submitted，不表示 rollout 完成。
-- 意图事务未确认不发送；最终写入未确认保留占用及准确远端观测。
-- 持久意图后崩溃不恢复发送；人工更正需证据/批准/版本条件，事务失败不解锁。
-- 记录读取范围、脱敏、空/加载/查询失败和新会话核验交接。
-
-## VERIFY
-
-后端事务/并发/集成测试、前端交互、build/lint、真实 Workflow 与适用环境的权限/故障/维护验证分别留证。替身可以计数和注入失败，不证明真实 Kubernetes RBAC 或人工恢复路径有效。
-
-实际结果仍为 NOT_EXECUTED。后续 [Review](../08-review/code-review.md) 或教学 PASS 不能将其升级为已执行。
+模拟变更次数来自本地计数器。真实 SSO/RBAC、数据库事务、进程崩溃后的占用、审计留存和恢复规程分别留给[运维就绪](../08-review/ops-readiness.md)。[S11](../08-review/code-review.md)使用实际变更与 Spec 审查。

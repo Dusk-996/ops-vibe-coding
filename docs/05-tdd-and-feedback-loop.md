@@ -54,4 +54,8 @@ Stop Condition
 ## 相关文档
 
 - [Full Track §10~11](../workflows/full.md)：TDD 与 Code Review
-- [Skill Map](../references/skills.md)：`tdd`、`code-review`
+- [Skill Map](../references/skills.md)：`superpowers:test-driven-development`、`code-review`
+
+## 核对测试证据
+
+对照 [Restart 运行记录](../examples/kubernetes-deployment-restart/07-implementation/tdd-evidence.md)，检查红灯是否指向目标行为，以及同一条断言在实现后的结果。按 [S10 判据](../references/stage-rubrics.md#s10)评价这组实物。

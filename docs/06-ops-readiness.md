@@ -88,3 +88,7 @@ ops-readiness-review → operational correctness（运行与操作安全）
 S14 的业务验收不自动授权上线。采用项目另外记录：发布产物版本、环境和目标范围、发布批准人及权限、适用的容量/部署/升级/回退验证、监控告警/维护责任、数据及任务恢复依据、停止与回退条件。缺少适用关键项时不得给出生产发布授权。
 
 静态配置、历史报告或教学 PASS 不单独证明运行就绪。平台若提供生产写操作，需要检查实际调用身份、目标限制及技术强制措施；提示词和 AGENTS 不能单独证明权限隔离。
+
+## 复查运行风险报告
+
+先用 [S12 判据](../references/stage-rubrics.md#s12)评价报告覆盖面与证据。真实 RBAC、持久审计及恢复的缺件由风险负责人跟进。[Restart 就绪报告](../examples/kubernetes-deployment-restart/08-review/ops-readiness.md)

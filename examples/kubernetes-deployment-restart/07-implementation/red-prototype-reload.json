@@ -1,0 +1,66 @@
+{
+  "started": "2026-11-22T10:29:53.808Z",
+  "node": "v26.13.1",
+  "browser": "157.0.8103.79",
+  "cases": [
+    {
+      "name": "cancel",
+      "status": "SKIPPED",
+      "reason": "本轮测试已停止：prototype-reload: Expected values to be strictly equal:\n\nfalse !== true\n",
+      "screenshots": []
+    },
+    {
+      "name": "accepted",
+      "status": "SKIPPED",
+      "reason": "本轮测试已停止：prototype-reload: Expected values to be strictly equal:\n\nfalse !== true\n",
+      "screenshots": []
+    },
+    {
+      "name": "timeout",
+      "status": "SKIPPED",
+      "reason": "本轮测试已停止：prototype-reload: Expected values to be strictly equal:\n\nfalse !== true\n",
+      "screenshots": []
+    },
+    {
+      "name": "rejected",
+      "status": "SKIPPED",
+      "reason": "本轮测试已停止：prototype-reload: Expected values to be strictly equal:\n\nfalse !== true\n",
+      "screenshots": []
+    },
+    {
+      "name": "audit-unconfirmed",
+      "status": "SKIPPED",
+      "reason": "本轮测试已停止：prototype-reload: Expected values to be strictly equal:\n\nfalse !== true\n",
+      "screenshots": []
+    },
+    {
+      "name": "conflict-windows",
+      "status": "SKIPPED",
+      "reason": "本轮测试已停止：prototype-reload: Expected values to be strictly equal:\n\nfalse !== true\n",
+      "screenshots": []
+    },
+    {
+      "name": "prototype-reload",
+      "status": "FAIL",
+      "screenshots": [],
+      "events": [],
+      "reason": "Expected values to be strictly equal:\n\nfalse !== true\n"
+    }
+  ],
+  "parity": [
+    {
+      "name": "desktop",
+      "status": "SKIPPED",
+      "reason": "本轮测试已停止：prototype-reload: Expected values to be strictly equal:\n\nfalse !== true\n",
+      "screenshots": []
+    },
+    {
+      "name": "mobile",
+      "status": "SKIPPED",
+      "reason": "本轮测试已停止：prototype-reload: Expected values to be strictly equal:\n\nfalse !== true\n",
+      "screenshots": []
+    }
+  ],
+  "failure": "prototype-reload: Expected values to be strictly equal:\n\nfalse !== true\n",
+  "finished": "2026-11-22T10:29:54.863Z"
+}

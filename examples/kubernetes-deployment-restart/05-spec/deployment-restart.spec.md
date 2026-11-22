@@ -1,6 +1,14 @@
 # Deployment Restart Spec
 
-> 教学行为契约；仓库没有此 API 或数据库实现。所有验收条款均为待真实项目验证的要求。
+> 固定样本为 `lab / staging / checkout`。可运行的本机 Mock 验证页面、请求次数和进程内防重；下列生产授权、事务及恢复契约须另验。
+
+| 编号 | 本地可观察结果 | 对应任务与证据 |
+|---|---|---|
+| R1 取消 | 核对目标后取消：零 POST、零模拟变更 | [T01](../06-tickets/ticket-01.md)；浏览器用例 `cancel` |
+| R2 确认 | accepted 且审计 confirmed，显示“请求已提交”，能按同一 ID 查记录 | [T01](../06-tickets/ticket-01.md)、[T02](../06-tickets/ticket-02.md)；用例 `accepted` |
+| R3 未知 | timeout 后保留原 ID，刷新仅 GET、继续阻止重复提交 | [T02](../06-tickets/ticket-02.md)；用例 `timeout` |
+
+[原始事件与操作 ID](../09-e2e/evidence/run.json)随每次运行生成。明确拒绝和最终审计未确认各有独立样本。
 
 输入：[产品范围](../01-prototype/approval.md)、[Mock](../02-react-mock/contract.md)、[Architecture Final](../04-architecture/stack-selection.md)。
 

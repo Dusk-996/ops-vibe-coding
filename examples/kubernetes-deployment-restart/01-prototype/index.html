@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deployment 重启 · 本地模拟</title><link rel="stylesheet" href="style.css"></head><body><main>
+<header><h1>Deployment 重启</h1><p>本地模拟 · 单目标提交</p></header>
+<section class="card"><h2>操作目标</h2>
+<dl><div><dt>集群</dt><dd>lab</dd></div><div><dt>Namespace</dt><dd>staging</dd></div><div><dt>Deployment</dt><dd>checkout</dd></div></dl>
+<label>模拟条件<select id="scenario"><option value="accepted">接受并记录</option><option value="timeout">提交超时</option><option value="rejected">明确拒绝</option><option value="audit-unconfirmed">最终审计未确认</option></select></label>
+<div class="actions"><button class="primary" id="restart">重启 Deployment</button></div></section>
+<dialog aria-labelledby="confirm-title"><h2 id="confirm-title">确认重启目标</h2><p>集群 lab / Namespace staging / Deployment checkout</p>
+<div class="actions"><button id="cancel">取消</button><button class="primary" id="submit">确认提交</button></div></dialog>
+<section aria-live="polite" class="card result" hidden><h2></h2><p></p><div>操作 ID <code></code></div>
+<div class="actions"><button id="audit">查看操作记录</button></div><pre hidden></pre></section>
+</main><script src="prototype.js"></script></body></html>

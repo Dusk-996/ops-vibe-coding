@@ -1,0 +1,14 @@
+{
+  "started": "2026-11-22T10:32:52.953Z",
+  "finished": "2026-11-22T10:32:55.544Z",
+  "implementation": "dbfd4fa",
+  "cli": "0.1.25",
+  "cancelApiCalls": 0,
+  "requests": [
+    "POST /api/deployments/staging/checkout/restart",
+    "GET /api/audit"
+  ],
+  "operationId": "2a5504b4-f3d4-4bcb-94ec-8090abc20f05",
+  "summary": "SUBMITTED / accepted / confirmed",
+  "mutationCount": 1
+}

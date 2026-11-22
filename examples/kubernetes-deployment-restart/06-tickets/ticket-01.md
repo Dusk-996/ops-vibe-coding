@@ -1,6 +1,8 @@
 # Ticket 01 — 提交一次已授权的 Restart 请求
 
-> 教学纵向切片；没有应用实现，实际完成状态 NOT_EXECUTED。
+> 本地已交付 R1/R2 与 R3 的提交端，见[实现与测试](../07-implementation/tdd-evidence.md)。目标固定为 `lab / staging / checkout`。生产身份、真实 PATCH 和数据库事务为待实现及验证项。
+
+依赖已定义的目标/接口与状态契约。验收本地切片时核对取消的 POST 数量和 accepted/timeout 返回的操作 ID、状态与模拟提交计数。[浏览器原始记录](../09-e2e/evidence/run.json)
 
 ## 用户价值与输入
 

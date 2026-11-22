@@ -48,4 +48,8 @@ React Mock 完成之后，如何不靠脑补得到架构与规格：UI 暴露能
 
 - [Full Track §5~9](../workflows/full.md)：Draft、Grill、Final、Spec、Tickets
 - [Artifact Map](../references/artifacts.md)：`stack-selection.draft.md`、`stack-selection.md`、Spec、Tickets
-- [Skill Map](../references/skills.md)：`stack-selector`、`grill-me`、`to-spec`、`to-tickets`
+- [Skill Map](../references/skills.md)：`stack-selector`、`grilling`、`to-spec`、`to-tickets`
+
+## 核对草案到定稿的交接
+
+取 [Restart 草案](../examples/kubernetes-deployment-restart/04-architecture/stack-selection.draft.md) 中的一个开放问题，查 S06 对应回答，再看 S07 如何落到组件与失败语义。三份材料各有[阶段判据](../references/stage-rubrics.md#s05)。

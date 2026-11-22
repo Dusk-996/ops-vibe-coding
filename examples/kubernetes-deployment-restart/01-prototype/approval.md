@@ -1,24 +1,12 @@
-# Prototype Approval
+# S02 原型体验与决定
 
-> 教学批准记录，不是实际人员对产品的批准。
+**待业务使用者确认（NOT_PERFORMED）。** 审核对象是修订 `dbfd4fa` 的[可点击原型](index.html)。下载这一目录后直接打开 HTML；也可运行 [React Mock](../02-react-mock/contract.md)，访问同一服务的 `/prototype/`。测试计划已获准执行，业务原型的批准仍待记录。
 
-## Gate Record
+| 体验步骤 | 请使用者核对 |
+|---|---|
+| 桌面 1280×800、窄屏 390×844 分别打开确认框 | 能辨认集群 `lab`、Namespace `staging`、Deployment `checkout`；取消后回到详情 |
+| 选择“接受并记录”，确认，再查看操作记录 | 能说明“请求已提交”只证明请求被接受，rollout 尚未验证 |
+| 选择“提交超时”，确认并刷新同一标签页 | 保留原操作 ID、显示“结果待核验”、重启入口禁用；知道需要联系核验人员 |
+| 在新标签页重新打开原型，分别体验明确拒绝和审计未确认 | 能区分确定未变更和远端已接受、最终审计仍待核验的情况 |
 
-- Gate：S02 Human Prototype Review
-- Example Status：APPROVED（illustrative）
-- 实际人工评审：NOT_PERFORMED
-- 范围：Deployment Detail 的单目标 Restart 请求与审计查看；不承诺 rollout 完成。
-
-## 产品意图
-
-Deployment Detail → Restart → 显示目标的确认框 → Confirm → 提交中 → 请求已提交／明确拒绝／结果待核验 → 对应操作记录。
-Cancel 不发送变更。未知结果提示“请求可能已执行，请勿重复提交，保存操作 ID 并联系核验人员”。
-
-只对已授权 Namespace 内一个 Deployment 操作。页面按钮不是后端授权；“请求已提交”不是“服务恢复”。集群、Namespace、Deployment 必须在确认框可辨认。
-
-## 排除与门禁
-
-批量、定时、回滚、自动重试、rollout 自动跟踪均排除。后台持久化与防重由后续架构确认；这里不决定数据库或 Worker。
-真实项目记录实际审核人、日期、原型版本、viewport、允许范围及下一步；未知约束不由 Agent 填为批准。
-
-下一步：[React Mock Contract](../02-react-mock/contract.md)。
+本轮仅评单目标本地模拟。批量、回滚、自动重试及 rollout 跟踪留在范围外。使用者请记录 **姓名或可追溯身份、日期、修订、已体验范围、接受或应调整的具体项**；有偏差时注明可接受的视口或状态。[浏览器证据](../09-e2e/test-report.md)可辅助复看。后续教学已提供 [React Mock](../02-react-mock/contract.md)，实际产品转换和 [S04 放行](../03-parity/prototype-parity.md)仍需对应人员决定。

@@ -2,7 +2,7 @@
   "schema_version": 1,
   "source": {
     "repository": "https://github.com/Dusk-996/skills-manager-backup",
-    "commit": "9dad86743b470bf1cb2f3d5de907239d85104003"
+    "commit": "cb43b9a4329fdda4b57c5323374ad1fc74c68b10"
   },
   "checksum_scope": "Canonical Git blob bytes, before platform checkout line-ending conversion.",
   "meaning": "Source inventory only; checksums are retrieval evidence, not execution or compatibility proof.",

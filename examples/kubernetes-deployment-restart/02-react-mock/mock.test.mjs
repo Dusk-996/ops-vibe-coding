@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createMockStore, TARGET } from './mock.mjs';
+import { createMockStore } from './mock.mjs';
+import { TARGET } from './target.mjs';
 
-test('unsubmitted or cancelled UI has no simulated mutation', () => {
+test('a fresh store has zero simulated mutations', () => {
   assert.equal(createMockStore().mutationCount, 0);
 });
 

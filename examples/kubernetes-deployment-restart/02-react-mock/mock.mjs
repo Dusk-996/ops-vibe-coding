@@ -1,4 +1,4 @@
-export const TARGET = Object.freeze({cluster: 'lab', namespace: 'staging', name: 'checkout'});
+import {TARGET} from './target.mjs';
 
 const outcomes = new Map([
   ['accepted', [200, 'SUBMITTED', 'accepted', 'confirmed']],

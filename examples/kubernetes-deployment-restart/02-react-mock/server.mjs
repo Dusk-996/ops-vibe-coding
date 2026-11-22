@@ -3,6 +3,7 @@ import {readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {resolve} from 'node:path';
 import {createMockStore} from './mock.mjs';
+import {RESTART_PATH} from './target.mjs';
 
 const staticFiles = new Map([
   ['/', ['./index.html', 'text/html']],
@@ -30,7 +31,7 @@ export function createDemoServer() {
         const record = store.lookup(url.searchParams.get('operation_id'));
         return record ? json(200, {record}) : json(404, {error: '本次服务中无此记录，请保留原操作 ID'});
       }
-      if (request.method === 'POST' && url.pathname === '/api/deployments/staging/checkout/restart') {
+      if (request.method === 'POST' && url.pathname === RESTART_PATH) {
         if (request.headers['content-type'] !== 'application/json') return json(415, {error: '预期 JSON'});
         let input = '';
         for await (const chunk of request) {

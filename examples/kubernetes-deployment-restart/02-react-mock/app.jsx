@@ -1,8 +1,9 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {createRoot} from 'react-dom/client';
+import {TARGET as target, RESTART_PATH} from './target.mjs';
 
-const target = {cluster: 'lab', namespace: 'staging', name: 'checkout'};
-const storageKey = 'restart:lab/staging/checkout:last-operation';
+const storageKey = ['restart', target.cluster, target.namespace, target.name, 'last-operation'].join(':');
+const targetLabel = `集群 ${target.cluster} / Namespace ${target.namespace} / Deployment ${target.name}`;
 const copy = {
   SUBMITTED: ['请求已提交', '模拟 API 已接受并记录；rollout 尚未验证。'],
   REJECTED: ['请求被拒绝', '模拟 API 明确拒绝，本次未形成变更。'],
@@ -41,7 +42,7 @@ function Demo() {
     const id = crypto.randomUUID();
     sessionStorage.setItem(storageKey, id);
     try {
-      const response = await fetch('/api/deployments/staging/checkout/restart', {
+      const response = await fetch(RESTART_PATH, {
         method: 'POST', headers: {'Content-Type': 'application/json', 'X-Operation-ID': id},
         body: JSON.stringify({target, scenario}),
       });
@@ -71,7 +72,7 @@ function Demo() {
   return <>
     <header><h1>Deployment 重启</h1><p>本地模拟 · 单目标提交</p></header>
     <section className="card"><h2>操作目标</h2>
-      <dl><div><dt>集群</dt><dd>lab</dd></div><div><dt>Namespace</dt><dd>staging</dd></div><div><dt>Deployment</dt><dd>checkout</dd></div></dl>
+      <dl><div><dt>集群</dt><dd>{target.cluster}</dd></div><div><dt>Namespace</dt><dd>{target.namespace}</dd></div><div><dt>Deployment</dt><dd>{target.name}</dd></div></dl>
       <label>模拟条件<select value={scenario} onChange={event => setScenario(event.target.value)}>
         <option value="accepted">接受并记录</option><option value="timeout">提交超时</option>
         <option value="rejected">明确拒绝</option><option value="audit-unconfirmed">最终审计未确认</option>
@@ -79,7 +80,7 @@ function Demo() {
       <div className="actions"><button className="primary" disabled={blocked} onClick={() => dialog.current.showModal()}>{busy ? '处理中…' : '重启 Deployment'}</button></div>
     </section>
     <dialog ref={dialog} aria-labelledby="confirm-title"><h2 id="confirm-title">确认重启目标</h2>
-      <p>集群 lab / Namespace staging / Deployment checkout</p><div className="actions">
+      <p>{targetLabel}</p><div className="actions">
         <button onClick={() => dialog.current.close()}>取消</button><button className="primary" onClick={submit}>确认提交</button>
       </div></dialog>
     {record && <section aria-live="polite" className="card result"><h2>{copy[record.state][0]}</h2><p>{copy[record.state][1]}</p>

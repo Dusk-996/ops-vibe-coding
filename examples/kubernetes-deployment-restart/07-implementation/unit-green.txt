@@ -1,0 +1,15 @@
+✔ a fresh store has zero simulated mutations (1.0817ms)
+✔ submitted means remote acceptance and recorded final audit (0.8772ms)
+✔ replay returns the same result; new ID cannot submit an unknown target (0.2455ms)
+✔ binding rejects an out-of-scope target before lookup or mutation (0.1861ms)
+✔ uncertain audit retains the occupied target even after remote acceptance (0.1637ms)
+✔ definite rejection has a record and permits a new independent operation (0.147ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 292.9854
+exit=0

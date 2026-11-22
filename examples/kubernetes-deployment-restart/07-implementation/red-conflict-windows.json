@@ -1,0 +1,80 @@
+{
+  "started": "2026-11-22T10:29:54.329Z",
+  "node": "v26.13.1",
+  "browser": "157.0.8103.79",
+  "cases": [
+    {
+      "name": "cancel",
+      "status": "SKIPPED",
+      "reason": "本轮测试已停止：conflict-windows: Expected values to be strictly equal:\n\n'结果待核验' !== '本次未提交'\n",
+      "screenshots": []
+    },
+    {
+      "name": "accepted",
+      "status": "SKIPPED",
+      "reason": "本轮测试已停止：conflict-windows: Expected values to be strictly equal:\n\n'结果待核验' !== '本次未提交'\n",
+      "screenshots": []
+    },
+    {
+      "name": "timeout",
+      "status": "SKIPPED",
+      "reason": "本轮测试已停止：conflict-windows: Expected values to be strictly equal:\n\n'结果待核验' !== '本次未提交'\n",
+      "screenshots": []
+    },
+    {
+      "name": "rejected",
+      "status": "SKIPPED",
+      "reason": "本轮测试已停止：conflict-windows: Expected values to be strictly equal:\n\n'结果待核验' !== '本次未提交'\n",
+      "screenshots": []
+    },
+    {
+      "name": "audit-unconfirmed",
+      "status": "SKIPPED",
+      "reason": "本轮测试已停止：conflict-windows: Expected values to be strictly equal:\n\n'结果待核验' !== '本次未提交'\n",
+      "screenshots": []
+    },
+    {
+      "name": "conflict-windows",
+      "status": "FAIL",
+      "screenshots": [],
+      "events": [
+        {
+          "method": "POST",
+          "path": "/api/deployments/staging/checkout/restart",
+          "code": 504,
+          "operationId": "d5d10ba8-e018-46f5-a3fa-d976dff0d35d"
+        },
+        {
+          "method": "POST",
+          "path": "/api/deployments/staging/checkout/restart",
+          "code": 409,
+          "operationId": "bf62d89d-0bcb-47b3-b3ae-3ca2c5d2cd02"
+        }
+      ],
+      "mutationCount": 1,
+      "reason": "Expected values to be strictly equal:\n\n'结果待核验' !== '本次未提交'\n"
+    },
+    {
+      "name": "prototype-reload",
+      "status": "SKIPPED",
+      "reason": "本轮测试已停止：conflict-windows: Expected values to be strictly equal:\n\n'结果待核验' !== '本次未提交'\n",
+      "screenshots": []
+    }
+  ],
+  "parity": [
+    {
+      "name": "desktop",
+      "status": "SKIPPED",
+      "reason": "本轮测试已停止：conflict-windows: Expected values to be strictly equal:\n\n'结果待核验' !== '本次未提交'\n",
+      "screenshots": []
+    },
+    {
+      "name": "mobile",
+      "status": "SKIPPED",
+      "reason": "本轮测试已停止：conflict-windows: Expected values to be strictly equal:\n\n'结果待核验' !== '本次未提交'\n",
+      "screenshots": []
+    }
+  ],
+  "failure": "conflict-windows: Expected values to be strictly equal:\n\n'结果待核验' !== '本次未提交'\n",
+  "finished": "2026-11-22T10:29:56.468Z"
+}

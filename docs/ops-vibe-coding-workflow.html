@@ -5195,6 +5195,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <div class="pulse-dot"></div>
         <h1>Ops Vibe Coding 完整流程</h1>
       </div>
+      <p class="subtitle">S00–S14 交接与门禁 · 在「阶段产物复查」查看各阶段共用的评分与人工决定。</p>
     </div>
 
 
@@ -5202,9 +5203,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     <!-- Main Diagram -->
     <div class="diagram-container" data-detail-level="read"
          data-preset-badge-editorial-plate="ARCHIFY / 图版 04">
-      <svg viewBox="0 0 1240 1290" data-reader-fit="width-first" data-layout-contract="readable-v2" role="img" lang="zh-CN" aria-labelledby="archify-diagram-title archify-diagram-description" data-animation="trace" data-preset="classic" data-quality-profile="showcase" data-node-ui="">
+      <svg viewBox="0 0 1240 1416" data-reader-fit="width-first" data-layout-contract="readable-v2" role="img" lang="zh-CN" aria-labelledby="archify-diagram-title archify-diagram-description" data-animation="trace" data-preset="classic" data-quality-profile="showcase" data-node-ui="">
         <title id="archify-diagram-title">Ops Vibe Coding 完整流程</title>
-        <desc id="archify-diagram-description">由 Archify 生成的工作流图。</desc>
+        <desc id="archify-diagram-description">S00–S14 交接与门禁 · 在「阶段产物复查」查看各阶段共用的评分与人工决定。</desc>
         <!-- Definitions -->
         <defs>
           <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
@@ -5278,6 +5279,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-8" x="40" y="1060" width="1164" height="106" rx="10" class="c-lane" stroke-width="1"/>
         <text x="54" y="1082" class="t-muted" font-size="10" font-weight="600">09 / 验收结果</text>
 
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-9" x="40" y="1186" width="1164" height="106" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="54" y="1208" class="t-muted" font-size="10" font-weight="600">10 / 各阶段通用 · 产物复查</text>
+
         <!-- Phase headers -->
         <path d="M 109.00000000000003 35 H 468.20000000000005" class="a-default phase-rule" stroke-width="1" stroke-linecap="round" fill="none"/>
         <rect x="235.40000000000003" y="27" width="106.39999999999999" height="16" rx="8" class="c-mask phase-chip"/>
@@ -5298,19 +5302,22 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <path data-edge-from="architecture_refine" data-edge-to="architecture" data-edge-label="补充约束" data-edge-key="2" data-composition-routing="workflow-v2-auto" data-edge-role="branch" data-composition-points="791.2,598;791.2,582;865.2,582;865.2,540;791.2,540;791.2,524" d="M 791.2 598 L 791.2 590 Q 791.2 582 799.2 582 L 857.2 582 Q 865.2 582 865.2 574 L 865.2 548 Q 865.2 540 857.2 540 L 799.2 540 Q 791.2 540 791.2 532 L 791.2 524" class="a-dashed" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
         <path data-edge-from="build_review" data-edge-to="feedback" data-edge-label="Review 阻断" data-edge-key="3" data-composition-routing="workflow-v2-auto" data-edge-role="error" data-composition-points="887.2,776;887.2,850" d="M 887.2 776 L 887.2 850" class="a-dashed" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
         <path data-edge-from="build_review" data-edge-to="ops_readiness" data-edge-label="Review 通过" data-edge-key="4" data-composition-routing="workflow-v2-auto" data-edge-role="main" data-composition-points="791.2,750;775.2,750;775.2,1056;1105.2,1056;1105.2,1036" d="M 791.2 750 L 783.2 750 Q 775.2 750 775.2 758 L 775.2 1048 Q 775.2 1056 783.2 1056 L 1097.2 1056 Q 1105.2 1056 1105.2 1048 L 1105.2 1036" class="a-emphasis" data-animate="edge" style="--step:6" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="e2e" data-edge-to="acceptance" data-edge-label="PASS" data-edge-key="5" data-composition-routing="workflow-v2-auto" data-edge-role="main" data-composition-points="1195.2,750;1221.2,750;1221.2,1128;1195.2,1128" d="M 1195.2 750 L 1213.2 750 Q 1221.2 750 1221.2 758 L 1221.2 1120 Q 1221.2 1128 1213.2 1128 L 1195.2 1128" class="a-emphasis" data-animate="edge" style="--step:8" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="e2e" data-edge-to="feedback" data-edge-label="FAIL / SKIPPED" data-edge-key="6" data-composition-routing="workflow-v2-auto" data-edge-role="error" data-composition-points="1081.2,776;1081.2,798;998.2,798;998.2,869;982.2,869" d="M 1081.2 776 L 1081.2 790 Q 1081.2 798 1073.2 798 L 1006.2 798 Q 998.2 798 998.2 806 L 998.2 861 Q 998.2 869 990.2 869 L 982.2 869" class="a-dashed" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="feedback" data-edge-to="build_review" data-edge-label="修复并补证据" data-edge-key="7" data-composition-routing="workflow-v2-auto" data-edge-role="branch" data-composition-points="792.2,876;776.2,876;776.2,798;863.2,798;863.2,776" d="M 792.2 876 L 784.2 876 Q 776.2 876 776.2 868 L 776.2 806 Q 776.2 798 784.2 798 L 855.2 798 Q 863.2 798 863.2 790 L 863.2 776" class="a-dashed" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="idea" data-edge-to="formal_design" data-edge-label="选定正式设计" data-edge-key="8" data-composition-routing="workflow-v2-auto" data-edge-role="branch" data-composition-points="48,120;32,120;32,552;147,552;147,524" d="M 48 120 L 40 120 Q 32 120 32 128 L 32 544 Q 32 552 40 552 L 139 552 Q 147 552 147 544 L 147 524" class="a-default" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="idea" data-edge-to="prototype" data-edge-label="原型目标已确认" data-edge-key="9" data-composition-routing="workflow-v2-auto" data-edge-role="main" data-composition-points="246,120;331.2,120" d="M 246 120 L 331.2 120" class="a-emphasis" data-animate="edge" style="--step:0" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="idea" data-edge-to="risk_summary" data-edge-label="仅评估" data-edge-key="10" data-composition-routing="workflow-v2-auto" data-edge-role="branch" data-composition-points="147,146;147,168;249,168;249,246;233,246" d="M 147 146 L 147 160 Q 147 168 155 168 L 241 168 Q 249 168 249 176 L 249 238 Q 249 246 241 246 L 233 246" class="a-default" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="ops_readiness" data-edge-to="e2e" data-edge-label="PASS / 风险已接受" data-edge-key="11" data-composition-routing="workflow-v2-auto" data-edge-role="main" data-composition-points="1105.2,968;1105.2,776" d="M 1105.2 968 L 1105.2 776" class="a-emphasis" data-animate="edge" style="--step:7" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="ops_readiness" data-edge-to="feedback" data-edge-label="FAIL / 风险未接受" data-edge-key="12" data-composition-routing="workflow-v2-auto" data-edge-role="error" data-composition-points="1030.2,1002;887.2,1002;887.2,902" d="M 1030.2 1002 L 895.2 1002 Q 887.2 1002 887.2 994 L 887.2 902" class="a-dashed" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="parity" data-edge-to="architecture" data-edge-label="PASS / 已接受备注" data-edge-key="13" data-composition-routing="workflow-v2-auto" data-edge-role="main" data-composition-points="767.2,406;767.2,472" d="M 767.2 406 L 767.2 472" class="a-emphasis" data-animate="edge" style="--step:4" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="parity" data-edge-to="react" data-edge-label="FAIL" data-edge-key="14" data-composition-routing="workflow-v2-auto" data-edge-role="error" data-composition-points="692.2,365;543.2,365;543.2,472" d="M 692.2 365 L 551.2 365 Q 543.2 365 543.2 373 L 543.2 472" class="a-dashed" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="prototype" data-edge-to="prototype_review" data-edge-label="交互原型" data-edge-key="15" data-composition-routing="workflow-v2-auto" data-edge-role="main" data-composition-points="430.2,146;430.2,212" d="M 430.2 146 L 430.2 212" class="a-default" data-animate="edge" style="--step:1" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="prototype_review" data-edge-to="react" data-edge-label="是 / 意图获批" data-edge-key="16" data-composition-routing="workflow-v2-auto" data-edge-role="main" data-composition-points="430.2,280;430.2,498;465.20000000000005,498" d="M 430.2 280 L 430.2 490 Q 430.2 498 438.2 498 L 465.20000000000005 498" class="a-emphasis" data-animate="edge" style="--step:2" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="react" data-edge-to="parity" data-edge-label="产品契约" data-edge-key="17" data-composition-routing="workflow-v2-auto" data-edge-role="main" data-composition-points="574.2,472;574.2,420;676.2,420;676.2,384;692.2,384" d="M 574.2 472 L 574.2 428 Q 574.2 420 582.2 420 L 668.2 420 Q 676.2 420 676.2 412 L 676.2 392 Q 676.2 384 684.2 384 L 692.2 384" class="a-default" data-animate="edge" style="--step:3" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="delivered_artifact" data-edge-to="score_report" data-edge-key="5" data-composition-routing="workflow-v2-auto" data-edge-role="branch" data-composition-points="224.5,1254;465.20000000000005,1254" d="M 224.5 1254 L 465.20000000000005 1254" class="a-default" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="e2e" data-edge-to="acceptance" data-edge-label="PASS" data-edge-key="6" data-composition-routing="workflow-v2-auto" data-edge-role="main" data-composition-points="1195.2,750;1221.2,750;1221.2,1128;1195.2,1128" d="M 1195.2 750 L 1213.2 750 Q 1221.2 750 1221.2 758 L 1221.2 1120 Q 1221.2 1128 1213.2 1128 L 1195.2 1128" class="a-emphasis" data-animate="edge" style="--step:8" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="e2e" data-edge-to="feedback" data-edge-label="FAIL / SKIPPED" data-edge-key="7" data-composition-routing="workflow-v2-auto" data-edge-role="error" data-composition-points="1081.2,776;1081.2,798;998.2,798;998.2,869;982.2,869" d="M 1081.2 776 L 1081.2 790 Q 1081.2 798 1073.2 798 L 1006.2 798 Q 998.2 798 998.2 806 L 998.2 861 Q 998.2 869 990.2 869 L 982.2 869" class="a-dashed" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="feedback" data-edge-to="build_review" data-edge-label="修复并补证据" data-edge-key="8" data-composition-routing="workflow-v2-auto" data-edge-role="branch" data-composition-points="792.2,876;776.2,876;776.2,798;863.2,798;863.2,776" d="M 792.2 876 L 784.2 876 Q 776.2 876 776.2 868 L 776.2 806 Q 776.2 798 784.2 798 L 855.2 798 Q 863.2 798 863.2 790 L 863.2 776" class="a-dashed" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="human_next" data-edge-to="stage_gate" data-edge-key="9" data-composition-routing="workflow-v2-auto" data-edge-role="branch" data-composition-points="967.2,1254;1027.2,1254" d="M 967.2 1254 L 1027.2 1254" class="a-default" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="idea" data-edge-to="formal_design" data-edge-label="选定正式设计" data-edge-key="10" data-composition-routing="workflow-v2-auto" data-edge-role="branch" data-composition-points="48,120;32,120;32,552;147,552;147,524" d="M 48 120 L 40 120 Q 32 120 32 128 L 32 544 Q 32 552 40 552 L 139 552 Q 147 552 147 544 L 147 524" class="a-default" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="idea" data-edge-to="prototype" data-edge-label="原型目标已确认" data-edge-key="11" data-composition-routing="workflow-v2-auto" data-edge-role="main" data-composition-points="246,120;331.2,120" d="M 246 120 L 331.2 120" class="a-emphasis" data-animate="edge" style="--step:0" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="idea" data-edge-to="risk_summary" data-edge-label="仅评估" data-edge-key="12" data-composition-routing="workflow-v2-auto" data-edge-role="branch" data-composition-points="147,146;147,168;249,168;249,246;233,246" d="M 147 146 L 147 160 Q 147 168 155 168 L 241 168 Q 249 168 249 176 L 249 238 Q 249 246 241 246 L 233 246" class="a-default" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="ops_readiness" data-edge-to="e2e" data-edge-label="PASS / 风险已接受" data-edge-key="13" data-composition-routing="workflow-v2-auto" data-edge-role="main" data-composition-points="1105.2,968;1105.2,776" d="M 1105.2 968 L 1105.2 776" class="a-emphasis" data-animate="edge" style="--step:7" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="ops_readiness" data-edge-to="feedback" data-edge-label="FAIL / 风险未接受" data-edge-key="14" data-composition-routing="workflow-v2-auto" data-edge-role="error" data-composition-points="1030.2,1002;887.2,1002;887.2,902" d="M 1030.2 1002 L 895.2 1002 Q 887.2 1002 887.2 994 L 887.2 902" class="a-dashed" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="parity" data-edge-to="architecture" data-edge-label="PASS / 已接受备注" data-edge-key="15" data-composition-routing="workflow-v2-auto" data-edge-role="main" data-composition-points="767.2,406;767.2,472" d="M 767.2 406 L 767.2 472" class="a-emphasis" data-animate="edge" style="--step:4" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="parity" data-edge-to="react" data-edge-label="FAIL" data-edge-key="16" data-composition-routing="workflow-v2-auto" data-edge-role="error" data-composition-points="692.2,365;543.2,365;543.2,472" d="M 692.2 365 L 551.2 365 Q 543.2 365 543.2 373 L 543.2 472" class="a-dashed" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="prototype" data-edge-to="prototype_review" data-edge-label="交互原型" data-edge-key="17" data-composition-routing="workflow-v2-auto" data-edge-role="main" data-composition-points="430.2,146;430.2,212" d="M 430.2 146 L 430.2 212" class="a-default" data-animate="edge" style="--step:1" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="prototype_review" data-edge-to="react" data-edge-label="是 / 意图获批" data-edge-key="18" data-composition-routing="workflow-v2-auto" data-edge-role="main" data-composition-points="430.2,280;430.2,498;465.20000000000005,498" d="M 430.2 280 L 430.2 490 Q 430.2 498 438.2 498 L 465.20000000000005 498" class="a-emphasis" data-animate="edge" style="--step:2" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="react" data-edge-to="parity" data-edge-label="产品契约" data-edge-key="19" data-composition-routing="workflow-v2-auto" data-edge-role="main" data-composition-points="574.2,472;574.2,420;676.2,420;676.2,384;692.2,384" d="M 574.2 472 L 574.2 428 Q 574.2 420 582.2 420 L 668.2 420 Q 676.2 420 676.2 412 L 676.2 392 Q 676.2 384 684.2 384 L 692.2 384" class="a-default" data-animate="edge" style="--step:3" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="score_report" data-edge-to="human_next" data-edge-key="20" data-composition-routing="workflow-v2-auto" data-edge-role="branch" data-composition-points="635.2,1254;807.2,1254" d="M 635.2 1254 L 807.2 1254" class="a-default" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead)"/>
 
         <!-- Nodes -->
         <g id="node-idea" data-node-id="idea" data-node-label="S00 澄清问题与原型目标" tabindex="0" role="button" aria-label="聚焦S00 澄清问题与原型目标，用户、痛点、成功标准, 产品意图 › Prototype + Intent" aria-pressed="false" data-node-kind="external" data-node-sublabel="用户、痛点、成功标准" data-node-context="产品意图 › Prototype + Intent">
@@ -5485,6 +5492,53 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <text data-detail="context" x="1105.2" y="1140" class="t-muted" font-size="8" text-anchor="middle">接受、补充或退回</text>
         </g>
 
+        <g id="node-delivered_artifact" data-node-id="delivered_artifact" data-node-label="交付本阶段产物" tabindex="0" role="button" aria-label="聚焦交付本阶段产物，注明阶段、版本和范围, 各阶段通用 · 产物复查 › Prototype + Intent" aria-pressed="false" data-node-kind="external" data-node-sublabel="注明阶段、版本和范围" data-node-context="各阶段通用 · 产物复查 › Prototype + Intent">
+          <title>交付本阶段产物 · 注明阶段、版本和范围 · 各阶段通用 · 产物复查 › Prototype + Intent</title>
+          <rect x="69.5" y="1228" width="155" height="52" rx="8" class="c-mask"/>
+          <rect x="69.5" y="1228" width="155" height="52" rx="8" class="c-external" data-animate="node" style="--step:12" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(75.5 1234) scale(0.6875)">
+            <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
+            <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="147" y="1249" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">交付本阶段产物</text>
+          <text data-detail="context" x="147" y="1266" class="t-muted" font-size="8" text-anchor="middle">注明阶段、版本和范围</text>
+        </g>
+
+        <g id="node-score_report" data-node-id="score_report" data-node-label="出具评分报告" tabindex="0" role="button" aria-label="聚焦出具评分报告，$stage-artifact-review, 各阶段通用 · 产物复查 › Architecture + SDD" aria-pressed="false" data-node-kind="backend" data-node-sublabel="$stage-artifact-review" data-node-context="各阶段通用 · 产物复查 › Architecture + SDD">
+          <title>出具评分报告 · $stage-artifact-review · 各阶段通用 · 产物复查 › Architecture + SDD</title>
+          <rect x="465.20000000000005" y="1228" width="170" height="52" rx="8" class="c-mask"/>
+          <rect x="465.20000000000005" y="1228" width="170" height="52" rx="8" class="c-backend" data-animate="node" style="--step:12" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(471.20000000000005 1234) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="550.2" y="1249" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">出具评分报告</text>
+          <text data-detail="context" x="550.2" y="1266" class="t-muted" font-size="8" text-anchor="middle">$stage-artifact-review</text>
+        </g>
+
+        <g id="node-human_next" data-node-id="human_next" data-node-label="人决定下一步" tabindex="0" role="button" aria-label="聚焦人决定下一步，是否修订、何时发起复评, 各阶段通用 · 产物复查 › Build + Ops + Acceptance" aria-pressed="false" data-node-kind="security" data-node-sublabel="是否修订、何时发起复评" data-node-context="各阶段通用 · 产物复查 › Build + Ops + Acceptance">
+          <title>人决定下一步 · 是否修订、何时发起复评 · 各阶段通用 · 产物复查 › Build + Ops + Acceptance</title>
+          <rect x="807.2" y="1228" width="160" height="52" rx="8" class="c-mask"/>
+          <rect x="807.2" y="1228" width="160" height="52" rx="8" class="c-security" data-animate="node" style="--step:12" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(813.2 1234) scale(0.6875)">
+            <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
+            <path d="m5.8 8 1.5 1.5 3-3"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="887.2" y="1249" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">人决定下一步</text>
+          <text data-detail="context" x="887.2" y="1266" class="t-muted" font-size="8" text-anchor="middle">是否修订、何时发起复评</text>
+        </g>
+
+        <g id="node-stage_gate" data-node-id="stage_gate" data-node-label="按原门禁处理" tabindex="0" role="button" aria-label="聚焦按原门禁处理，放行、结束、退回或待确认, 各阶段通用 · 产物复查 › Build + Ops + Acceptance" aria-pressed="false" data-node-kind="external" data-node-sublabel="放行、结束、退回或待确认" data-node-context="各阶段通用 · 产物复查 › Build + Ops + Acceptance">
+          <title>按原门禁处理 · 放行、结束、退回或待确认 · 各阶段通用 · 产物复查 › Build + Ops + Acceptance</title>
+          <rect x="1027.2" y="1228" width="156" height="52" rx="8" class="c-mask"/>
+          <rect x="1027.2" y="1228" width="156" height="52" rx="8" class="c-external" data-animate="node" style="--step:12" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(1033.2 1234) scale(0.6875)">
+            <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
+            <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="1105.2" y="1249" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">按原门禁处理</text>
+          <text data-detail="context" x="1105.2" y="1266" class="t-muted" font-size="8" text-anchor="middle">放行、结束、退回或待确认</text>
+        </g>
+
         <!-- Edge labels -->
         <g data-detail="context" data-edge-from="architecture" data-edge-to="architecture_refine" data-edge-label="关键约束未知" data-edge-key="0">
           <rect x="733.4000000000001" y="551" width="67.6" height="14" rx="3" class="c-mask"/>
@@ -5506,77 +5560,80 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <rect x="908.8000000000001" y="1036" width="62.8" height="14" rx="3" class="c-mask"/>
           <text x="940.2" y="1046" class="t-edge-emphasis" font-size="8" text-anchor="middle">Review 通过</text>
         </g>
-        <g data-detail="context" data-edge-from="e2e" data-edge-to="acceptance" data-edge-label="PASS" data-edge-key="5">
+
+        <g data-detail="context" data-edge-from="e2e" data-edge-to="acceptance" data-edge-label="PASS" data-edge-key="6">
           <rect x="1193.2" y="730" width="30" height="14" rx="3" class="c-mask"/>
           <text x="1208.2" y="740" class="t-edge-emphasis" font-size="8" text-anchor="middle">PASS</text>
         </g>
-        <g data-detail="context" data-edge-from="e2e" data-edge-to="feedback" data-edge-label="FAIL / SKIPPED" data-edge-key="6">
+        <g data-detail="context" data-edge-from="e2e" data-edge-to="feedback" data-edge-label="FAIL / SKIPPED" data-edge-key="7">
           <rect x="1001.1" y="778" width="77.2" height="14" rx="3" class="c-mask"/>
           <text x="1039.7" y="788" class="t-edge-dashed" font-size="8" text-anchor="middle">FAIL / SKIPPED</text>
         </g>
-        <g data-detail="context" data-edge-from="feedback" data-edge-to="build_review" data-edge-label="修复并补证据" data-edge-key="7">
+        <g data-detail="context" data-edge-from="feedback" data-edge-to="build_review" data-edge-label="修复并补证据" data-edge-key="8">
           <rect x="785.9000000000001" y="778" width="67.6" height="14" rx="3" class="c-mask"/>
           <text x="819.7" y="788" class="t-edge-dashed" font-size="8" text-anchor="middle">修复并补证据</text>
         </g>
-        <g data-detail="context" data-edge-from="idea" data-edge-to="formal_design" data-edge-label="选定正式设计" data-edge-key="8">
+
+        <g data-detail="context" data-edge-from="idea" data-edge-to="formal_design" data-edge-label="选定正式设计" data-edge-key="10">
           <rect x="55.7" y="532" width="67.6" height="14" rx="3" class="c-mask"/>
           <text x="89.5" y="542" class="t-muted" font-size="8" text-anchor="middle">选定正式设计</text>
         </g>
-        <g data-detail="context" data-edge-from="idea" data-edge-to="prototype" data-edge-label="原型目标已确认" data-edge-key="9">
+        <g data-detail="context" data-edge-from="idea" data-edge-to="prototype" data-edge-label="原型目标已确认" data-edge-key="11">
           <rect x="250.00000000000003" y="100" width="77.2" height="14" rx="3" class="c-mask"/>
           <text x="288.6" y="110" class="t-edge-emphasis" font-size="8" text-anchor="middle">原型目标已确认</text>
         </g>
-        <g data-detail="context" data-edge-from="idea" data-edge-to="risk_summary" data-edge-label="仅评估" data-edge-key="10">
+        <g data-detail="context" data-edge-from="idea" data-edge-to="risk_summary" data-edge-label="仅评估" data-edge-key="12">
           <rect x="178.6" y="148" width="38.8" height="14" rx="3" class="c-mask"/>
           <text x="198" y="158" class="t-muted" font-size="8" text-anchor="middle">仅评估</text>
         </g>
-        <g data-detail="context" data-edge-from="ops_readiness" data-edge-to="e2e" data-edge-label="PASS / 风险已接受" data-edge-key="11">
+        <g data-detail="context" data-edge-from="ops_readiness" data-edge-to="e2e" data-edge-label="PASS / 风险已接受" data-edge-key="13">
           <rect x="1059.4" y="862" width="91.6" height="14" rx="3" class="c-mask"/>
           <text x="1105.2" y="872" class="t-edge-emphasis" font-size="8" text-anchor="middle">PASS / 风险已接受</text>
         </g>
-        <g data-detail="context" data-edge-from="ops_readiness" data-edge-to="feedback" data-edge-label="FAIL / 风险未接受" data-edge-key="12">
+        <g data-detail="context" data-edge-from="ops_readiness" data-edge-to="feedback" data-edge-label="FAIL / 风险未接受" data-edge-key="14">
           <rect x="912.9000000000001" y="982" width="91.6" height="14" rx="3" class="c-mask"/>
           <text x="958.7" y="992" class="t-edge-dashed" font-size="8" text-anchor="middle">FAIL / 风险未接受</text>
         </g>
-        <g data-detail="context" data-edge-from="parity" data-edge-to="architecture" data-edge-label="PASS / 已接受备注" data-edge-key="13">
+        <g data-detail="context" data-edge-from="parity" data-edge-to="architecture" data-edge-label="PASS / 已接受备注" data-edge-key="15">
           <rect x="721.4000000000001" y="429" width="91.6" height="14" rx="3" class="c-mask"/>
           <text x="767.2" y="439" class="t-edge-emphasis" font-size="8" text-anchor="middle">PASS / 已接受备注</text>
         </g>
-        <g data-detail="context" data-edge-from="parity" data-edge-to="react" data-edge-label="FAIL" data-edge-key="14">
+        <g data-detail="context" data-edge-from="parity" data-edge-to="react" data-edge-label="FAIL" data-edge-key="16">
           <rect x="602.7" y="345" width="30" height="14" rx="3" class="c-mask"/>
           <text x="617.7" y="355" class="t-edge-dashed" font-size="8" text-anchor="middle">FAIL</text>
         </g>
-        <g data-detail="context" data-edge-from="prototype" data-edge-to="prototype_review" data-edge-label="交互原型" data-edge-key="15">
+        <g data-detail="context" data-edge-from="prototype" data-edge-to="prototype_review" data-edge-label="交互原型" data-edge-key="17">
           <rect x="406" y="169" width="48.4" height="14" rx="3" class="c-mask"/>
           <text x="430.2" y="179" class="t-muted" font-size="8" text-anchor="middle">交互原型</text>
         </g>
-        <g data-detail="context" data-edge-from="prototype_review" data-edge-to="react" data-edge-label="是 / 意图获批" data-edge-key="16">
+        <g data-detail="context" data-edge-from="prototype_review" data-edge-to="react" data-edge-label="是 / 意图获批" data-edge-key="18">
           <rect x="394" y="379" width="72.4" height="14" rx="3" class="c-mask"/>
           <text x="430.2" y="389" class="t-edge-emphasis" font-size="8" text-anchor="middle">是 / 意图获批</text>
         </g>
-        <g data-detail="context" data-edge-from="react" data-edge-to="parity" data-edge-label="产品契约" data-edge-key="17">
+        <g data-detail="context" data-edge-from="react" data-edge-to="parity" data-edge-label="产品契约" data-edge-key="19">
           <rect x="601" y="400" width="48.4" height="14" rx="3" class="c-mask"/>
           <text x="625.2" y="410" class="t-muted" font-size="8" text-anchor="middle">产品契约</text>
         </g>
 
+
         <!-- Legend -->
         <g data-legend="" data-legend-bridge="">
-          <text x="20" y="1190" class="t-primary" font-size="12" font-weight="650">图例</text>
-          <g data-legend-semantic-kind="frontend" data-legend-kind="frontend" data-legend-label="用户界面" data-legend-x="20" data-legend-baseline="1210" data-legend-width="81">
-            <rect x="20" y="1202" width="14" height="9" rx="2" class="c-frontend" stroke-width="1"/>
-            <text x="42" y="1210" class="t-muted" font-size="7.5" font-weight="500">用户界面</text>
+          <text x="20" y="1316" class="t-primary" font-size="12" font-weight="650">图例</text>
+          <g data-legend-semantic-kind="frontend" data-legend-kind="frontend" data-legend-label="用户界面" data-legend-x="20" data-legend-baseline="1336" data-legend-width="81">
+            <rect x="20" y="1328" width="14" height="9" rx="2" class="c-frontend" stroke-width="1"/>
+            <text x="42" y="1336" class="t-muted" font-size="7.5" font-weight="500">用户界面</text>
           </g>
-          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="Agent 逻辑" data-legend-x="108" data-legend-baseline="1210" data-legend-width="90">
-            <rect x="108" y="1202" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/>
-            <text x="130" y="1210" class="t-muted" font-size="7.5" font-weight="500">Agent 逻辑</text>
+          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="Agent 逻辑" data-legend-x="108" data-legend-baseline="1336" data-legend-width="90">
+            <rect x="108" y="1328" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/>
+            <text x="130" y="1336" class="t-muted" font-size="7.5" font-weight="500">Agent 逻辑</text>
           </g>
-          <g data-legend-semantic-kind="security" data-legend-kind="security" data-legend-label="策略" data-legend-x="205" data-legend-baseline="1210" data-legend-width="62">
-            <rect x="205" y="1202" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
-            <text x="227" y="1210" class="t-muted" font-size="7.5" font-weight="500">策略</text>
+          <g data-legend-semantic-kind="security" data-legend-kind="security" data-legend-label="策略" data-legend-x="205" data-legend-baseline="1336" data-legend-width="62">
+            <rect x="205" y="1328" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
+            <text x="227" y="1336" class="t-muted" font-size="7.5" font-weight="500">策略</text>
           </g>
-          <g data-legend-semantic-kind="external" data-legend-kind="external" data-legend-label="外部系统" data-legend-x="274" data-legend-baseline="1210" data-legend-width="81">
-            <rect x="274" y="1202" width="14" height="9" rx="2" class="c-external" stroke-width="1"/>
-            <text x="296" y="1210" class="t-muted" font-size="7.5" font-weight="500">外部系统</text>
+          <g data-legend-semantic-kind="external" data-legend-kind="external" data-legend-label="外部系统" data-legend-x="274" data-legend-baseline="1336" data-legend-width="81">
+            <rect x="274" y="1328" width="14" height="9" rx="2" class="c-external" stroke-width="1"/>
+            <text x="296" y="1336" class="t-muted" font-size="7.5" font-weight="500">外部系统</text>
           </g>
         </g>
       </svg>
@@ -5756,6 +5813,18 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     </div>
     <!-- Info Cards -->
     <div class="cards">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot emerald"></div>
+          <h3>阶段产物复查</h3>
+        </div>
+        <ul>
+          <li>每个已交付节点使用适用的同版规则。原始分、最终分、关键项封顶原因和逐项证据进入评分报告。</li>
+          <li>低于 8 分列出缺口及修改建议。由人决定是否修订或发起复评，复评引用前次报告。</li>
+          <li>评分与阶段放行分别记录。例如 S13 可以如实记录测试失败并获得 10 分，产品仍须修复。</li>
+        </ul>
+      </div>
+
       <div class="card">
         <div class="card-header">
           <div class="card-dot cyan"></div>

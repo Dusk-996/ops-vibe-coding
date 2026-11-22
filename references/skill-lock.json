@@ -2,7 +2,7 @@
   "schema_version": 1,
   "source": {
     "repository": "https://github.com/Dusk-996/skills-manager-backup",
-    "commit": "1c7d8f29ab347843ef7007338308ca52f317ef58"
+    "commit": "9dad86743b470bf1cb2f3d5de907239d85104003"
   },
   "checksum_scope": "Canonical Git blob bytes, before platform checkout line-ending conversion.",
   "meaning": "Source inventory only; checksums are retrieval evidence, not execution or compatibility proof.",
@@ -470,12 +470,23 @@
           "sha256": "0cea7708999aa663701917615889a84cbc05200718bb161de9a5366a826c2b4d"
         }
       ]
+    },
+    {
+      "name": "stage-artifact-review",
+      "kind": "entry",
+      "entry": "stage-artifact-review/SKILL.md",
+      "files": [
+        {
+          "path": "stage-artifact-review/SKILL.md",
+          "sha256": "30623deea803ffcffa407d7fba0353a9a67dc5e47f6657cba923b40455c1965f"
+        }
+      ]
     }
   ],
   "licenses": [
     {
       "path": "docs/RESTORE.md",
-      "sha256": "8c9cbb5b21a935d2a1deac32f8b99beba823110bb1726a03150b1b6fdf25957a"
+      "sha256": "daec6369f0ce4a1b4e5763506e5749f1047952f65738eb328d8786f6cc106b2a"
     },
     {
       "path": "external-skills/superpowers/LICENSE",

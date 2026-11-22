@@ -119,3 +119,7 @@ Harness 而引入它们；只有项目复杂度和变更风险提供了具体证
 3. 按 [04-gates-and-evidence.md](04-gates-and-evidence.md) 为现有门禁增加 Gate Record 产物；
 4. 按 [06-tool-and-permission-boundaries.md](06-tool-and-permission-boundaries.md) 明确权限边界，高危操作交给人工；
 5. 运行几个真实 Ticket，把纠错沉淀进仓库（见 [05-feedback-and-self-refinement.md](05-feedback-and-self-refinement.md)）。
+
+## 阶段评分放在哪里
+
+交接记录引用同一份受评产物、评分报告与原门禁。评分细则由[工作流](../references/stage-rubrics.md)维护，示例见[门禁记录](examples/gate-record.example.md)。

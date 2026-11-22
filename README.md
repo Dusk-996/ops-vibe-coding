@@ -11,6 +11,8 @@
 
 先说清楚谁遇到了什么问题、现在怎么做、怎样算解决。S00 可以停在风险清单；决定做原型时，由人选定一个目标。没有前端经验，可以从 [单页原型库](https://github.com/luozijian1990/Beautiful-Ops-Pages) 或 [平台原型库](https://github.com/luozijian1990/Beautiful-Ops-Platform) 选已有页面，用 Mock 数据替换成自己的场景。
 
+在每个实际交付的节点，打开产物并按[阶段评分细则](references/stage-rubrics.md)复查。五项合计 10 分，8 分合格。报告给出扣分位置和复验条件，由人决定是否修订或继续；原型批准、测试范围和风险接受分别记录。[看一份从 7 分到 10 分的复评](docs/reviews/calibration/skill-invocations.md)
+
 ## 完整流程
 
 ![Ops Vibe Coding 完整工作流，覆盖 S00–S14、人工门禁和反馈路径](docs/diagrams/ops-vibe-coding-workflow.svg)
@@ -19,7 +21,7 @@
 
 图中蓝色实线表示主路径，黄色菱形标记判断或人工批准，红色虚线表示退回与修复。阶段编号与 Full Track 对应，具体放行条件及回退规则以阶段说明为准。
 
-[Archify 交互版流程图](docs/ops-vibe-coding-workflow.html) 提供主题切换、缩放、搜索和阶段导览。请下载 HTML 后用浏览器打开，本次核验见[调整验证记录](docs/reviews/2026-11-22-s00-workflow.md)。
+[Archify 交互版流程图](docs/ops-vibe-coding-workflow.html) 提供主题切换、缩放、搜索和阶段导览。请下载 HTML 后用浏览器打开，图稿与本地 Restart 验证见[15 阶段覆盖清单](docs/reviews/2026-11-22-stage-artifacts.md)。
 
 Parity、Review、Ops Readiness 或 E2E 发现问题后，都要回到对应阶段修正并重新提供证据。人工验收完成后，将验收记录交给实际项目的生产发布流程。
 
@@ -52,7 +54,7 @@ Parity、Review、Ops Readiness 或 E2E 发现问题后，都要回到对应阶�
 
 新人负责按任务生成/核对产物、记录证据并在缺输入、权限或结果未知时停手；维护者确认架构、Spec 和测试范围，资深人员复核技术与运行风险，有权发布人另行批准上线。每个采用项目须把这些角色绑定到实际人员，不能由 Agent 代签。
 
-本次[工作流验证记录](docs/reviews/2026-11-22-s00-workflow.md)列出本地样本、实际调用和未验证范围。旧版本的采用与图稿检查见 [2026-11-15 记录](docs/reviews/2026-11-15-reuse-validation.md)。
+本次[阶段验收记录](docs/reviews/2026-11-22-stage-artifacts.md)列出 Restart 本地证据和待确认事项。此前[只读发布巡检](docs/reviews/2026-11-22-s00-workflow.md)单独保留。旧版本的采用与图稿检查见 [2026-11-15 记录](docs/reviews/2026-11-15-reuse-validation.md)。
 
 ### 工作原则
 
@@ -75,4 +77,4 @@ Parity、Review、Ops Readiness 或 E2E 发现问题后，都要回到对应阶�
 | [Beautiful Ops Platform](https://github.com/luozijian1990/Beautiful-Ops-Platform) | 提供可直接体验和改写的完整运维平台原型 |
 | [skills-manager-backup](https://github.com/Dusk-996/skills-manager-backup) | 提供工作流引用的技能版本，具体入口及依赖见 [Skill Map](references/skills.md) |
 
-本仓库引用现有原型和 Skills，但不复制它们的实现。首版也刻意不提供 CLI、Agent Framework、低代码平台或大量 Demo；目标是先让一条面向运维场景的完整路径清楚、可执行、可验证。
+本地可运行的 [Deployment Restart 案例](examples/kubernetes-deployment-restart/README.md) 随本仓库维护。工作流通过固定版本引用上游技能。

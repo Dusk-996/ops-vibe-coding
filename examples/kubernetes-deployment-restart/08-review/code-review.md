@@ -1,18 +1,27 @@
-# Code Review
+# S11 代码审查 · 本地 Restart
 
-> 教学审查。Actual Verification: NOT_VERIFIED；没有应用代码、真实比较点或产品测试结果。
-> Example Outcome: PASS 仅表示若下列要求均有证据时的记录形态，不是本例实际通过。
+首轮基点 `daee2c0`，实现 `f99380a`；执行 `git diff daee2c0...f99380a`，含红灯提交 `0a6bc82` 和最小实现。两名审查者并行对照[仓库规范](../../../AGENTS.md)、[Spec](../05-spec/deployment-restart.spec.md)、[T01](../06-tickets/ticket-01.md)、[T02](../06-tickets/ticket-02.md) 和[获批测试计划](../09-e2e/test-task.md)。范围为本机可运行切片。
 
-## Standards
+| 编号 / 轴 | 首轮发现与影响 | 复核靶点 |
+|---|---|---|
+| C1 · Spec | 目标被另一个窗口占用时，服务返回 409 和旧记录，页面把旧 ID 写作本次结果。两个操作的归属变得不清。 | 新请求明确未发出变更，占用 ID 与本次尝试可区分；模拟变更总数仍为 1。 |
+| C2 · Spec | HTML 原型的未知结果只在内存，刷新后可以重新打开确认框；计划要求保留原 ID、阻重。 | 同一页刷新后展示同一操作 ID、保持阻重。 |
+| C3 · 规范 / Spec | 浏览器脚本只登记成功用例，断言抛错后其余计划项可能从报告消失。旧截图还可能混入新的运行目录。 | 每次运行隔离输出。逐例记录 FAIL/PASS，未执行项写 SKIPPED 并给原因。 |
+| C4 · 规范 | 单元用例名声称覆盖 UI 取消，实际只断言新创建的存储计数为零。 | 单元用例名准确，真正的点击取消由浏览器回执证明。 |
+| C5 · 规范建议 | React 的目标路径、显示名和请求对象重复写死，更改目标时可能漂移。 | React/Mock 从同一目标定义读取；HTML 原型作为独立对照。 |
 
-检查后端强制授权、凭证仅在服务端、意图/占用先持久化、 mutation 不自动重试、错误脱敏、不增加无证据基础设施。检查报告的对象修订、方法及原始来源，不能用 [NOT_EXECUTED 的 TDD](../07-implementation/tdd-evidence.md)宣告实际验证。
+首轮决定为退回修订。仓库维护者随后单独授权修复 C1/C2 并在同一本机 Mock 增测“双窗口冲突”和“原型刷新阻重”。修订和再验收的范围见[测试计划](../09-e2e/test-task.md)。
 
-## Spec
+## 修订复核
 
-按 [Spec](../05-spec/deployment-restart.spec.md)核对提交与完成的区别、未知状态、审计故障、跨进程防重、目标冲突和 [Ticket 02](../06-tickets/ticket-02.md) 的受控恢复交接。逐项引用文件位置和验收条款，发现设计遗漏退回 Spec/架构。
+最终代码为 `dbfd4faee855737ce14d81524da10c313e40df5a`。两个审查者对 `f99380a..dbfd4fa` 分别复核，新增回归先在 `2be32a1` 重现，随后在最终版本变绿。
 
-## 门禁
+| 编号 | 关闭依据 |
+|---|---|
+| C1 | `conflict-windows` 区分本次请求 ID 和占用操作 ID；409 后刷新按占用 ID 查询。两次 POST 合计一次模拟变更。 |
+| C2 | `prototype-reload` 刷新后保留原 ID 和阻断提示，全程零 API 调用。 |
+| C3 | [测试脚本](../02-react-mock/browser-test.mjs)为每次运行创建独立目录，预登记计划项。各用例结束后记录通过，断言失败保留用例及原因，未执行项保留跳过原因。两条回归的失败与复验可追到[TDD 记录](../07-implementation/tdd-evidence.md)。 |
+| C4 | [单元测试](../02-react-mock/mock.test.mjs)按“初始存储计数”命名；浏览器真实点击取消，`cancel` 无 POST。 |
+| C5 | React 与服务共享 [target.mjs](../02-react-mock/target.mjs)；两个视口的确认框图与原型一致。 |
 
-真实原生 code-review 需有效固定比较点、非空已提交 diff、规范和确认 Spec；Standards、Spec 两轴分别执行。空 diff 不算审查通过。技术报告不代替风险接受和人工验收。
-
-本例没有真实发现关闭记录，不构成进入实际生产流程的许可；下一步教学展示 [Ops Review](ops-readiness.md)。
+**规范轴、Spec 轴在获准本地切片内均可交接。** 独立复跑构建、6 项单元测试、7 条浏览器用例和 2 项视口对照通过。浏览器用例具体操作、请求 ID 和截图见[原始回执](../09-e2e/evidence/run.json)。生产权限和持久化仍交给 [S12](ops-readiness.md)。

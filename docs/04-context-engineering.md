@@ -63,3 +63,7 @@
 
 - [Full Track §10](../workflows/full.md)：TDD 阶段如何消费上下文
 - [Artifact Map](../references/artifacts.md)：Tickets 是会话的事实来源
+
+## 接手续评
+
+在交接记录中附产物版本、上次报告、规则版本和待复验项。更换规则时单列新基线。[填写模板](../harness/examples/handoff.example.md)

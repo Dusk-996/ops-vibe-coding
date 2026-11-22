@@ -45,3 +45,7 @@ HTML Prototype 在写正式代码之前同时给出三样东西：
 - [Full Track §1~4](../workflows/full.md)：本阶段对应流程
 - [Artifact Map](../references/artifacts.md)：`prototype/approval.md`、`docs/reviews/*-prototype-parity.md`
 - [Skill Map](../references/skills.md)：`html-to-mui-react`、`prototype-parity-review`
+
+## 拿实物复查
+
+打开 [Restart 原型](../examples/kubernetes-deployment-restart/01-prototype/index.html)，走完取消、提交和未知三条路径。S01 评原型，S02 评使用者的决定记录，S04 评两个版本的对照证据，各自引用对应[规则](../references/stage-rubrics.md#s01)。

@@ -6,6 +6,7 @@
     "locale": "zh-CN",
     "output": "docs/ops-vibe-coding-workflow.html",
     "quality_profile": "showcase",
+    "subtitle": "S00–S14 交接与门禁 · 在「阶段产物复查」查看各阶段共用的评分与人工决定。",
     "views": [
       {
         "id": "full-loop",
@@ -27,6 +28,12 @@
           "feedback"
         ],
         "note": "主路径向前推进，所有门禁都可以把工作送回需要修正的阶段。"
+      },
+      {
+        "id": "artifact-review",
+        "label": "阶段产物复查",
+        "focus": ["delivered_artifact", "score_report", "human_next", "stage_gate"],
+        "note": "产物满分 10 分，8 分合格。触发关键项封顶时最高 7 分。人决定是否修订、何时复评，另按原阶段条件放行。"
       },
       {
         "id": "prototype-and-parity",
@@ -55,25 +62,16 @@
       },
       {
         "id": "build-and-operations",
-        "label": "实现与运行证据",
+        "label": "实现、运行与验收",
         "focus": [
           "architecture",
           "build_review",
           "feedback",
           "ops_readiness",
-          "e2e"
-        ],
-        "note": "实现、审查、运维就绪和真实浏览器证据共同决定能否继续。"
-      },
-      {
-        "id": "acceptance",
-        "label": "验收与交付",
-        "focus": [
           "e2e",
-          "acceptance",
-          "feedback"
+          "acceptance"
         ],
-        "note": "测试通过仍需由人确认软件解决了最初的问题。"
+        "note": "实现经审查和测试后，由业务使用者和风险负责人确认能否接受。"
       }
     ]
   },
@@ -86,7 +84,8 @@
     { "id": "delivery", "label": "实现与交付" },
     { "id": "late_feedback", "label": "交付反馈", "variant": "exception" },
     { "id": "late_gates", "label": "运行门禁" },
-    { "id": "outcomes", "label": "验收结果" }
+    { "id": "outcomes", "label": "验收结果" },
+    { "id": "artifact_review", "label": "各阶段通用 · 产物复查" }
   ],
   "phases": [
     { "id": "prototype_phase", "label": "Prototype + Intent", "fromCol": 0, "toCol": 1 },
@@ -107,12 +106,14 @@
   ],
   "semanticChecks": {
     "allowedRoots": [
-      "idea"
+      "idea",
+      "delivered_artifact"
     ],
     "allowedTerminals": [
       "acceptance",
       "risk_summary",
-      "formal_design"
+      "formal_design",
+      "stage_gate"
     ],
     "requiredPaths": [
       { "from": "idea", "to": "acceptance" },
@@ -120,10 +121,15 @@
       { "from": "ops_readiness", "to": "feedback" },
       { "from": "e2e", "to": "feedback" },
       { "from": "idea", "to": "risk_summary" },
-      { "from": "idea", "to": "formal_design" }
+      { "from": "idea", "to": "formal_design" },
+      { "from": "delivered_artifact", "to": "stage_gate" }
     ]
   },
   "nodes": [
+    { "id": "delivered_artifact", "lane": "artifact_review", "col": 0, "width": 155, "type": "external", "label": "交付本阶段产物", "sublabel": "注明阶段、版本和范围" },
+    { "id": "score_report", "lane": "artifact_review", "col": 2, "width": 170, "type": "backend", "label": "出具评分报告", "sublabel": "$stage-artifact-review" },
+    { "id": "human_next", "lane": "artifact_review", "col": 4, "width": 160, "type": "security", "label": "人决定下一步", "sublabel": "是否修订、何时发起复评" },
+    { "id": "stage_gate", "lane": "artifact_review", "col": 5, "width": 156, "type": "external", "label": "按原门禁处理", "sublabel": "放行、结束、退回或待确认" },
     { "id": "idea", "lane": "intent", "col": 0, "width": 198, "type": "external", "label": "S00 澄清问题与原型目标", "sublabel": "用户、痛点、成功标准" },
     { "id": "risk_summary", "lane": "early_gates", "col": 0, "width": 172, "type": "external", "label": "风险清单", "sublabel": "保留待决事项后结束" },
     { "id": "formal_design", "lane": "contract", "col": 0, "width": 172, "type": "external", "label": "正式设计", "sublabel": "设计获批后编写实施计划" },
@@ -140,6 +146,9 @@
     { "id": "acceptance", "lane": "outcomes", "col": 5, "width": 180, "type": "security", "label": "S14 人工验收", "sublabel": "接受、补充或退回" }
   ],
   "edges": [
+    { "from": "delivered_artifact", "to": "score_report", "role": "branch" },
+    { "from": "score_report", "to": "human_next", "role": "branch" },
+    { "from": "human_next", "to": "stage_gate", "role": "branch" },
     { "from": "idea", "to": "prototype", "label": "原型目标已确认", "role": "main", "variant": "emphasis" },
     { "from": "idea", "to": "risk_summary", "label": "仅评估", "role": "branch" },
     { "from": "idea", "to": "formal_design", "label": "选定正式设计", "role": "branch" },
@@ -160,6 +169,15 @@
     { "from": "e2e", "to": "acceptance", "label": "PASS", "role": "main", "variant": "emphasis" }
   ],
   "cards": [
+    {
+      "dot": "emerald",
+      "title": "阶段产物复查",
+      "items": [
+        "每个已交付节点使用适用的同版规则。原始分、最终分、关键项封顶原因和逐项证据进入评分报告。",
+        "低于 8 分列出缺口及修改建议。由人决定是否修订或发起复评，复评引用前次报告。",
+        "评分与阶段放行分别记录。例如 S13 可以如实记录测试失败并获得 10 分，产品仍须修复。"
+      ]
+    },
     {
       "dot": "cyan",
       "title": "从问题到原型",

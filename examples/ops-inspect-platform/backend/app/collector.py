@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ctypes
 import hashlib
+import logging
 import os
 import platform
 import re
@@ -16,6 +17,12 @@ from typing import Any, Callable
 
 from .config import Settings
 from .storage import now_str
+
+logger = logging.getLogger("ops_inspect.collector")
+
+# 远程输出单次读取安全上限，避免异常标准输出撑爆进程内存
+MAX_SSH_OUTPUT_BYTES = 65536
+MAX_SSH_STDERR_BYTES = 4096
 
 # 远程 Linux 只读白名单命令常量：严禁拼接用户输入，一次 SSH 往返采集全部指标
 SSH_READONLY_CMD = (
@@ -267,8 +274,29 @@ def collect_ssh(
             known_hosts = settings.ssh_keys_dir / "known_hosts"
             if known_hosts.is_file():
                 client.load_host_keys(str(known_hosts))
+            elif settings.ssh_strict_host_key:
+                logger.warning(
+                    "SSH 严格主机指纹校验已阻断连接：target=%s address=%s 缺少 known_hosts 文件",
+                    target.get("host"),
+                    target.get("address"),
+                )
+                return ProbeResult(
+                    target_id=target["id"],
+                    host=target["host"],
+                    mem_total=None,
+                    mem_free=None,
+                    cores=None,
+                    cpu=None,
+                    probe_status="UNREACHABLE",
+                    last_checked_at=ts,
+                    probe_error="缺少 SSH known_hosts 主机指纹白名单文件（严格模式下已拒连）",
+                )
             else:
-                # 首次内网接入缺少 known_hosts 时退化为 AutoAddPolicy（生产建议挂载 known_hosts）
+                logger.warning(
+                    "SSH_STRICT_HOST_KEY=false 且缺少 known_hosts，已临时使用 AutoAddPolicy：target=%s address=%s",
+                    target.get("host"),
+                    target.get("address"),
+                )
                 client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         client.connect(
@@ -285,8 +313,11 @@ def collect_ssh(
         _, stdout, stderr = client.exec_command(SSH_READONLY_CMD, timeout=exec_timeout)
         if hasattr(stdout, "channel") and stdout.channel is not None:
             stdout.channel.settimeout(exec_timeout)
-        raw_out = stdout.read().decode("utf-8", errors="replace")
-        raw_err = stderr.read().decode("utf-8", errors="replace").strip() if stderr else ""
+        raw_out_bytes = stdout.read(MAX_SSH_OUTPUT_BYTES + 1)
+        if len(raw_out_bytes) > MAX_SSH_OUTPUT_BYTES:
+            raise ValueError(f"SSH 采集输出超过 {MAX_SSH_OUTPUT_BYTES} 字节安全上限")
+        raw_out = raw_out_bytes.decode("utf-8", errors="replace")
+        raw_err = stderr.read(MAX_SSH_STDERR_BYTES).decode("utf-8", errors="replace").strip() if stderr else ""
         if not raw_out.strip():
             raise RuntimeError(raw_err or "远程只读采集未返回指标输出")
 

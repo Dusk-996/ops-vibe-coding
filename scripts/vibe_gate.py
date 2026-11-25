@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
-"""Ops Vibe Coding v3.3 确定性门禁引擎（仅使用 Python 标准库）。
+"""Ops Vibe Coding v3.4 确定性门禁引擎（仅使用 Python 标准库）。
+
+核心铁律：
+  - 全流程 7 阶段：p1 / p2 / p3 / p4a / p4b / p5 / p6，全人工硬锁；
+  - 只有 P6 阶段才涉及生产部署设计、部署交付物、部署红线扫描与最终上线放行；
+  - P1–P5 专注需求原型、技术栈、规格骨架、前后端实现与真环境全面测试，严禁提前抢跑部署。
 
 支持 4 条命令：
   init     初始化目标项目（生成 AGENTS.md、.vibe/state.json、docs/vibe/）
-  check    执行 P1–P5 全 6 阶段硬校验（p1/p2/p3/p4a/p4b/p5，亲自跑命令拿真实退出码 + 静态红线扫描）
-  approve  人工拍板放行（覆盖全部 6 阶段 p1/p2/p3/p4a/p4b/p5，且必须先通过对应阶段 check）
+  check    执行 P1–P6 全 7 阶段硬校验（亲自跑命令拿真实退出码 + 分阶段静态红线扫描）
+  approve  人工拍板放行（覆盖全部 7 阶段 p1/p2/p3/p4a/p4b/p5/p6，且必须先通过对应阶段 check）
   status   查看当前阶段、命令配置、失败重试计数与人工批准状态
 """
 
@@ -30,17 +35,18 @@ if hasattr(sys.stdout, "reconfigure"):
 if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
-SCHEMA_VERSION = "3.3"
+SCHEMA_VERSION = "3.4"
 MAX_RETRIES = 3
-STAGES = ("p1", "p2", "p3", "p4a", "p4b", "p5")
-HUMAN_GATES = ("p1", "p2", "p3", "p4a", "p4b", "p5")
+STAGES = ("p1", "p2", "p3", "p4a", "p4b", "p5", "p6")
+HUMAN_GATES = ("p1", "p2", "p3", "p4a", "p4b", "p5", "p6")
 NEXT_STAGE = {
     "p1": "p2",
     "p2": "p3",
     "p3": "p4a",
     "p4a": "p4b",
     "p4b": "p5",
-    "p5": "released",
+    "p5": "p6",
+    "p6": "released",
 }
 
 GUARD_START = "<!-- VIBE-GUARD-START -->"
@@ -85,7 +91,22 @@ def load_state(project: Path) -> dict[str, Any]:
     state_path = project / ".vibe" / "state.json"
     if not state_path.exists():
         raise SystemExit(f"[ERROR] 未找到 {state_path}，请先执行 init 初始化项目。")
-    return json.loads(read_text(state_path))
+    state = json.loads(read_text(state_path))
+    # 平滑兼容历史 v3.3 状态文件补齐 p6 槽位
+    gates = state.setdefault("gates", {})
+    for s in STAGES:
+        if s not in gates:
+            gates[s] = {
+                "status": "pending",
+                "retries": 0,
+                "last_checked_at": None,
+                "findings": [],
+                "approved": False,
+                "approved_at": None,
+                "approved_by": None,
+                "note": "",
+            }
+    return state
 
 
 def save_state(project: Path, state: dict[str, Any]) -> None:
@@ -167,6 +188,10 @@ def has_unresolved_issue(markdown_text: str, keywords: tuple[str, ...] = ("BLOCK
         "无 blocker",
         "无 fail",
         "无阻断",
+        "：无",
+        ": 无",
+        "无（0）",
+        "无(0)",
         "closed",
         "resolved",
         "fixed",
@@ -184,7 +209,7 @@ def has_unresolved_issue(markdown_text: str, keywords: tuple[str, ...] = ("BLOCK
         if any(h in low for h in resolved_hints):
             continue
         for kw in keywords:
-            if re.search(rf"(?<![A-Za-z]){re.escape(kw)}(?![A-Za-z])", line, re.IGNORECASE):
+            if re.search(rf"(?<![A-Za-z0-9_-]){re.escape(kw)}(?![A-Za-z0-9_-])", line, re.IGNORECASE):
                 hits.append(f"L{lineno}: {line[:120]}")
                 break
     return hits
@@ -217,8 +242,43 @@ def is_test_file(path: Path, project: Path) -> bool:
     )
 
 
-def builtin_hard_scan(project: Path) -> list[str]:
-    """P4 内置硬扫描：密钥、:latest、root 容器、reload=True、CORS *、Mock 未关、K8s 探针/限额。"""
+def find_deploy_artifacts(project: Path) -> list[str]:
+    """查找项目中的生产部署编排与打包文件（仅允许在 P6 阶段存在）。"""
+    project_res = project.resolve()
+    found: list[str] = []
+    for fpath in iter_project_files(project_res, include_docs_vibe=False):
+        if fpath.resolve() == SCRIPT_PATH:
+            continue
+        rel = fpath.relative_to(project_res).as_posix()
+        parts = rel.lower().split("/")
+        low_name = fpath.name.lower()
+        if (
+            parts[0] in ("deploy", "k8s", "helm")
+            or low_name in ("docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml", "nginx.conf")
+            or low_name == "dockerfile"
+            or low_name.startswith("dockerfile.")
+            or low_name.endswith(".dockerfile")
+            or low_name.endswith(".service")
+        ):
+            found.append(rel)
+    return sorted(set(found))
+
+
+def detect_early_deploy_files(project: Path, state: dict[str, Any]) -> list[str]:
+    """在尚未获批进入 P6（p5 未 approved）前，阻断提前创建部署文件。"""
+    if state["gates"].get("p5", {}).get("approved"):
+        return []
+    early = find_deploy_artifacts(project)
+    if not early:
+        return []
+    preview = ", ".join(early[:5]) + (" ..." if len(early) > 5 else "")
+    return [
+        f"[EARLY-DEPLOY] 尚未进入 P6 部署阶段，禁止在 P1–P5 提前编写部署文件（发现 {len(early)} 个：{preview}）；请删除并在 P5 测试通过后再进入 P6 设计部署。"
+    ]
+
+
+def builtin_app_scan(project: Path) -> list[str]:
+    """P3 / P4a / P4b 应用与配置红线扫描（不含 P6 部署编排扫描）。"""
     issues: list[str] = []
     project_res = project.resolve()
     files = iter_project_files(project_res, include_docs_vibe=False)
@@ -237,11 +297,9 @@ def builtin_hard_scan(project: Path) -> list[str]:
         if fpath.resolve() == SCRIPT_PATH:
             continue
         rel = fpath.relative_to(project_res).as_posix()
-        name = fpath.name
-        low_name = name.lower()
+        low_name = fpath.name.lower()
         suffix = fpath.suffix.lower()
 
-        # 仅扫描文本类源码与配置，跳过超大文件或二进制
         if fpath.stat().st_size > 1_000_000:
             continue
         if suffix in (".png", ".jpg", ".jpeg", ".gif", ".webp", ".ico", ".pdf", ".zip", ".woff", ".woff2", ".lock"):
@@ -262,8 +320,52 @@ def builtin_hard_scan(project: Path) -> list[str]:
                 issues.append(f"[SECRET] {rel}: 疑似硬编码敏感凭据 `{m.group(1)}`")
                 break
 
-        # 2. Dockerfile 检查（:latest、USER root / 缺少 USER、VITE_USE_MOCK=true）
+        # 2. .env 文件检查 VITE_USE_MOCK=true
+        if low_name == ".env" or low_name.startswith(".env."):
+            for lineno, raw in enumerate(text.splitlines(), start=1):
+                line = raw.strip()
+                if not line or line.startswith("#"):
+                    continue
+                if re.search(r"VITE_USE_MOCK\s*=\s*[\"']?true[\"']?", line, re.IGNORECASE):
+                    issues.append(f"[MOCK] {rel}:{lineno}: 环境配置开启了 VITE_USE_MOCK=true")
+
+        # 3. Python 后端源码检查 reload=True 与 CORS *
+        if suffix == ".py" and not test_flag:
+            if re.search(r"\breload\s*=\s*True\b", text):
+                issues.append(f"[RELOAD] {rel}: 禁止保留 reload=True")
+            if re.search(r"""allow_origins\s*=\s*\[\s*["']\*["']\s*\]""", text) or re.search(
+                r"""Access-Control-Allow-Origin["']?\s*[:=]\s*["']\*["']""", text
+            ):
+                issues.append(f"[CORS] {rel}: 禁止通配 CORS (*)")
+
+        # 4. 前端源码检查默认开启 Mock
+        if rel.startswith("frontend/") and suffix in (".ts", ".tsx", ".js", ".jsx") and not test_flag:
+            if re.search(r"""VITE_USE_MOCK\s*!==\s*["']false["']""", text) or re.search(
+                r"""const\s+USE_MOCK\s*=\s*true\b""", text
+            ):
+                issues.append(f"[MOCK] {rel}: 前端源码默认开启了 Mock 模式")
+
+    return issues
+
+
+def builtin_deploy_scan(project: Path) -> list[str]:
+    """P6 专属部署安全硬扫描：叠加应用扫描 + Dockerfile/Compose/K8s/systemd 红线。"""
+    issues = builtin_app_scan(project)
+    project_res = project.resolve()
+    files = iter_project_files(project_res, include_docs_vibe=False)
+
+    for fpath in files:
+        if fpath.resolve() == SCRIPT_PATH:
+            continue
+        if fpath.stat().st_size > 1_000_000:
+            continue
+        rel = fpath.relative_to(project_res).as_posix()
+        low_name = fpath.name.lower()
+        suffix = fpath.suffix.lower()
+
+        # 1. Dockerfile 检查（:latest、USER root / 缺少 USER、VITE_USE_MOCK=true）
         if low_name == "dockerfile" or low_name.startswith("dockerfile.") or low_name.endswith(".dockerfile"):
+            text = read_text(fpath)
             users: list[str] = []
             for lineno, raw in enumerate(text.splitlines(), start=1):
                 line = raw.strip()
@@ -281,8 +383,9 @@ def builtin_hard_scan(project: Path) -> list[str]:
             elif users[-1].lower() in ("root", "0", "0:0"):
                 issues.append(f"[ROOT] {rel}: 最终运行用户为 root ({users[-1]})")
 
-        # 3. docker-compose 与 K8s YAML 检查
+        # 2. docker-compose 与 K8s YAML 检查
         if suffix in (".yml", ".yaml"):
+            text = read_text(fpath)
             for lineno, raw in enumerate(text.splitlines(), start=1):
                 line = raw.strip()
                 if not line or line.startswith("#"):
@@ -303,32 +406,20 @@ def builtin_hard_scan(project: Path) -> list[str]:
                     if "resources:" not in doc or "limits:" not in doc:
                         issues.append(f"[K8S] {rel} (doc #{idx}): 缺少 resources.limits")
 
-        # 4. .env 文件检查 VITE_USE_MOCK=true
-        if low_name == ".env" or low_name.startswith(".env."):
-            for lineno, raw in enumerate(text.splitlines(), start=1):
-                line = raw.strip()
-                if not line or line.startswith("#"):
-                    continue
-                if re.search(r"VITE_USE_MOCK\s*=\s*[\"']?true[\"']?", line, re.IGNORECASE):
-                    issues.append(f"[MOCK] {rel}:{lineno}: 环境配置开启了 VITE_USE_MOCK=true")
-
-        # 5. Python 后端源码检查 reload=True 与 CORS *
-        if suffix == ".py" and not test_flag:
-            if re.search(r"\breload\s*=\s*True\b", text):
-                issues.append(f"[RELOAD] {rel}: 禁止保留 reload=True")
-            if re.search(r"""allow_origins\s*=\s*\[\s*["']\*["']\s*\]""", text) or re.search(
-                r"""Access-Control-Allow-Origin["']?\s*[:=]\s*["']\*["']""", text
-            ):
-                issues.append(f"[CORS] {rel}: 禁止通配 CORS (*)")
-
-        # 6. 前端源码检查默认开启 Mock
-        if rel.startswith("frontend/") and suffix in (".ts", ".tsx", ".js", ".jsx") and not test_flag:
-            if re.search(r"""VITE_USE_MOCK\s*!==\s*["']false["']""", text) or re.search(
-                r"""const\s+USE_MOCK\s*=\s*true\b""", text
-            ):
-                issues.append(f"[MOCK] {rel}: 前端源码默认开启了 Mock 模式")
+        # 3. systemd unit 检查（必须指定非 root User=）
+        if suffix == ".service":
+            text = read_text(fpath)
+            m_user = re.search(r"(?mi)^\s*User\s*=\s*(\S+)", text)
+            if not m_user:
+                issues.append(f"[SYSTEMD] {rel}: 未显式声明非 root 的 User=")
+            elif m_user.group(1).strip().lower() in ("root", "0"):
+                issues.append(f"[SYSTEMD] {rel}: 禁止以 root 运行服务 ({m_user.group(1).strip()})")
 
     return issues
+
+
+# 兼容别名
+builtin_hard_scan = builtin_deploy_scan
 
 
 def scan_frontend_ui_baseline(project: Path) -> list[str]:
@@ -345,7 +436,6 @@ def scan_frontend_ui_baseline(project: Path) -> list[str]:
         if is_test_file(fpath, project_res):
             continue
         raw = read_text(fpath)
-        # 剔除块注释与单行注释，避免注释里提及 <select> 产生误报
         no_block = re.sub(r"/\*.*?\*/", "", raw, flags=re.DOTALL)
         no_line = re.sub(r"(?m)^\s*//.*$", "", no_block)
         if re.search(r"<select(?:\s|>|/)", no_line, re.IGNORECASE):
@@ -354,8 +444,8 @@ def scan_frontend_ui_baseline(project: Path) -> list[str]:
     return issues
 
 
-def run_optional_scanners(project: Path) -> tuple[list[dict[str, Any]], list[str]]:
-    """自动探测并执行已安装的外部扫描器；未安装显式标 SKIPPED。"""
+def run_optional_scanners(project: Path, *, include_deploy: bool = False) -> tuple[list[dict[str, Any]], list[str]]:
+    """自动探测并执行已安装的外部扫描器；P4b 仅跑代码级扫描，P6 才追加部署级扫描（如 hadolint）。"""
     results: list[dict[str, Any]] = []
     failures: list[str] = []
     project_res = project.resolve()
@@ -365,13 +455,6 @@ def run_optional_scanners(project: Path) -> tuple[list[dict[str, Any]], list[str
     has_backend_py = any(
         f.suffix == ".py" and f.relative_to(project_res).as_posix().startswith("backend/") for f in all_files
     )
-    dockerfiles = [
-        f
-        for f in all_files
-        if f.name.lower() == "dockerfile"
-        or f.name.lower().startswith("dockerfile.")
-        or f.name.lower().endswith(".dockerfile")
-    ]
 
     # gitleaks
     if shutil.which("gitleaks"):
@@ -383,47 +466,55 @@ def run_optional_scanners(project: Path) -> tuple[list[dict[str, Any]], list[str
     else:
         results.append({"tool": "gitleaks", "status": "SKIPPED", "reason": "not installed"})
 
-    # ruff
-    if not shutil.which("ruff"):
-        results.append({"tool": "ruff", "status": "SKIPPED", "reason": "not installed"})
-    elif not has_py:
-        results.append({"tool": "ruff", "status": "SKIPPED", "reason": "no python files"})
-    else:
-        res = run_cmd("ruff check .", cwd=project_res)
-        status = "PASS" if res["passed"] else "FAIL"
-        results.append({"tool": "ruff", "status": status, "returncode": res["returncode"]})
-        if not res["passed"]:
-            failures.append(f"ruff 检查未通过（exit={res['returncode']}）")
-
-    # bandit
-    if not shutil.which("bandit"):
-        results.append({"tool": "bandit", "status": "SKIPPED", "reason": "not installed"})
-    elif not has_backend_py:
-        results.append({"tool": "bandit", "status": "SKIPPED", "reason": "no backend python files"})
-    else:
-        res = run_cmd("bandit -r backend -ll", cwd=project_res)
-        status = "PASS" if res["passed"] else "FAIL"
-        results.append({"tool": "bandit", "status": status, "returncode": res["returncode"]})
-        if not res["passed"]:
-            failures.append(f"bandit 安全扫描未通过（exit={res['returncode']}）")
-
-    # hadolint
-    if not shutil.which("hadolint"):
-        results.append({"tool": "hadolint", "status": "SKIPPED", "reason": "not installed"})
-    elif not dockerfiles:
-        results.append({"tool": "hadolint", "status": "SKIPPED", "reason": "no Dockerfile found"})
-    else:
-        failed_df = []
-        for df in dockerfiles:
-            rel = df.relative_to(project_res).as_posix()
-            res = run_cmd(f'hadolint "{rel}"', cwd=project_res)
-            if not res["passed"]:
-                failed_df.append(rel)
-        if failed_df:
-            results.append({"tool": "hadolint", "status": "FAIL", "files": failed_df})
-            failures.append(f"hadolint 检查未通过: {', '.join(failed_df)}")
+    if not include_deploy:
+        # ruff（代码级，P4b）
+        if not shutil.which("ruff"):
+            results.append({"tool": "ruff", "status": "SKIPPED", "reason": "not installed"})
+        elif not has_py:
+            results.append({"tool": "ruff", "status": "SKIPPED", "reason": "no python files"})
         else:
-            results.append({"tool": "hadolint", "status": "PASS", "returncode": 0})
+            res = run_cmd("ruff check .", cwd=project_res)
+            status = "PASS" if res["passed"] else "FAIL"
+            results.append({"tool": "ruff", "status": status, "returncode": res["returncode"]})
+            if not res["passed"]:
+                failures.append(f"ruff 检查未通过（exit={res['returncode']}）")
+
+        # bandit（代码级，P4b）
+        if not shutil.which("bandit"):
+            results.append({"tool": "bandit", "status": "SKIPPED", "reason": "not installed"})
+        elif not has_backend_py:
+            results.append({"tool": "bandit", "status": "SKIPPED", "reason": "no backend python files"})
+        else:
+            res = run_cmd("bandit -r backend -ll", cwd=project_res)
+            status = "PASS" if res["passed"] else "FAIL"
+            results.append({"tool": "bandit", "status": status, "returncode": res["returncode"]})
+            if not res["passed"]:
+                failures.append(f"bandit 安全扫描未通过（exit={res['returncode']}）")
+    else:
+        # hadolint（仅 P6 部署阶段）
+        dockerfiles = [
+            f
+            for f in all_files
+            if f.name.lower() == "dockerfile"
+            or f.name.lower().startswith("dockerfile.")
+            or f.name.lower().endswith(".dockerfile")
+        ]
+        if not shutil.which("hadolint"):
+            results.append({"tool": "hadolint", "status": "SKIPPED", "reason": "not installed"})
+        elif not dockerfiles:
+            results.append({"tool": "hadolint", "status": "SKIPPED", "reason": "no Dockerfile in deploy strategy"})
+        else:
+            failed_df = []
+            for df in dockerfiles:
+                rel = df.relative_to(project_res).as_posix()
+                res = run_cmd(f'hadolint "{rel}"', cwd=project_res)
+                if not res["passed"]:
+                    failed_df.append(rel)
+            if failed_df:
+                results.append({"tool": "hadolint", "status": "FAIL", "files": failed_df})
+                failures.append(f"hadolint 检查未通过: {', '.join(failed_df)}")
+            else:
+                results.append({"tool": "hadolint", "status": "PASS", "returncode": 0})
 
     return results, failures
 
@@ -463,7 +554,7 @@ def check_mutating_security_tests(project: Path) -> list[str]:
     return [f"mutating 模式缺少必需负面安全测试: {', '.join(missing)}"] if missing else []
 
 
-# ==================== 各阶段硬校验 ====================
+# ==================== 各阶段硬校验（P1–P6） ====================
 
 
 def check_p1(project: Path, state: dict[str, Any], _args: argparse.Namespace | None = None) -> tuple[list[str], dict[str, Any]]:
@@ -501,7 +592,7 @@ def check_p1(project: Path, state: dict[str, Any], _args: argparse.Namespace | N
 
 
 def check_p2(project: Path, state: dict[str, Any], _args: argparse.Namespace | None = None) -> tuple[list[str], dict[str, Any]]:
-    """v3.0 P2：聚焦技术栈与核心运维机制确认（跳过假 React Mock 二次返工）。"""
+    """v3.4 P2：聚焦前后端技术栈、核心运维机制与数据存储边界（不提前设计 P6 部署编排）。"""
     errors: list[str] = []
 
     if not state["gates"]["p1"].get("approved"):
@@ -517,7 +608,6 @@ def check_p2(project: Path, state: dict[str, Any], _args: argparse.Namespace | N
 
     if arch.exists() and read_text(arch).strip():
         a_text = read_text(arch)
-        # 排除引用草案文件名（如 02-architecture.draft.md）造成的误报
         cleaned_text = re.sub(r"[\w./-]+\.draft\.md\b", "", a_text, flags=re.IGNORECASE)
         if re.search(r"(?i)\b(DRAFT|TBD|TODO|BLOCKER)\b|待定|阻断未知项", cleaned_text):
             errors.append("docs/vibe/02-architecture.md 仍含未定稿标记（DRAFT/TBD/TODO/BLOCKER/待定）")
@@ -530,12 +620,12 @@ def check_p2(project: Path, state: dict[str, Any], _args: argparse.Namespace | N
 
 
 def check_p3(project: Path, state: dict[str, Any], args: argparse.Namespace | None = None) -> tuple[list[str], dict[str, Any]]:
+    """v3.4 P3：规格、契约、任务书与干净空工程骨架（严禁提前生成 P6 部署文件）。"""
     errors: list[str] = []
 
     if not state["gates"]["p2"].get("approved"):
         errors.append("前置门禁未通过：P2（技术栈与核心机制）尚未获得人工 approve p2")
 
-    # 校验根 AGENTS.md 安全红线未被删改
     agents_md = project / "AGENTS.md"
     expected_hash = state.get("agents_guard_sha256")
     actual_hash = extract_guard_hash(agents_md)
@@ -544,7 +634,7 @@ def check_p3(project: Path, state: dict[str, Any], args: argparse.Namespace | No
     elif not actual_hash or actual_hash != expected_hash:
         errors.append("根 AGENTS.md 安全红线区块（VIBE-GUARD）缺失或已被篡改")
 
-    for rel in ("docs/vibe/03-spec.md", "docs/vibe/03-openapi.yaml", "docs/vibe/03-tasks.md", "docker-compose.yml"):
+    for rel in ("docs/vibe/03-spec.md", "docs/vibe/03-openapi.yaml", "docs/vibe/03-tasks.md"):
         p = project / rel
         if not p.exists() or not read_text(p).strip():
             errors.append(f"缺少或为空: {rel}")
@@ -569,14 +659,14 @@ def check_p3(project: Path, state: dict[str, Any], args: argparse.Namespace | No
     if not cmds.get("backend_test", "").strip():
         errors.append(".vibe/state.json 尚未配置 commands.backend_test")
 
-    # v3.2：P3 空骨架阶段即提前执行容器/配置红线扫描，不等到 P4b 才暴露
-    errors.extend(builtin_hard_scan(project))
+    errors.extend(builtin_app_scan(project))
+    errors.extend(detect_early_deploy_files(project, state))
 
     return errors, {}
 
 
 def check_p4a(project: Path, state: dict[str, Any], args: argparse.Namespace | None = None) -> tuple[list[str], dict[str, Any]]:
-    """v3.2 P4a：前端实现、构建与生产 UI 基线校验（验收通过后才准进入 P4b 写后端）。"""
+    """v3.4 P4a：前端实现、生产构建、UI 基线与原型一致性校验（不涉及部署）。"""
     errors: list[str] = []
     extra: dict[str, Any] = {"command_results": []}
 
@@ -605,21 +695,26 @@ def check_p4a(project: Path, state: dict[str, Any], args: argparse.Namespace | N
     elif not fb_cmd and not allow_skip_fe:
         errors.append(".vibe/state.json 缺少 commands.frontend_build（纯离线演练请加 --allow-skip-frontend）")
 
-    # 检查前端生产环境不能残留 VITE_USE_MOCK=true
     for env_name in (".env.production", ".env.prod"):
         ep = frontend_dir / env_name
         if ep.exists() and re.search(r"(?mi)^\s*VITE_USE_MOCK\s*=\s*['\"]?(?:true|1)['\"]?\s*$", read_text(ep)):
             errors.append(f"frontend/{env_name} 禁止开启 VITE_USE_MOCK=true")
 
-    # v3.2：P4a 即执行内置硬扫描（含默认 Mock/凭据泄漏）与前端生产 UI 基线检查（禁原生 <select>）
-    errors.extend(builtin_hard_scan(project))
+    parity_doc = project / "docs" / "vibe" / "04-parity-review.md"
+    if parity_doc.exists() and read_text(parity_doc).strip():
+        unresolved = has_unresolved_issue(read_text(parity_doc))
+        if unresolved:
+            errors.append(f"docs/vibe/04-parity-review.md 存在未关闭 BLOCKER/FAIL: {unresolved[0]}")
+
+    errors.extend(builtin_app_scan(project))
     errors.extend(scan_frontend_ui_baseline(project))
+    errors.extend(detect_early_deploy_files(project, state))
 
     return errors, extra
 
 
 def check_p4b(project: Path, state: dict[str, Any], args: argparse.Namespace | None = None) -> tuple[list[str], dict[str, Any]]:
-    """v3.1 P4b：后端核心采集/业务实现、真实测试、安全扫描与双审查（必须先过 P4a 前端验收）。"""
+    """v3.4 P4b：后端核心引擎、单元测试、安全扫描与双审查（仅代码与应用运行级，不涉及 P6 部署）。"""
     errors: list[str] = []
     extra: dict[str, Any] = {"command_results": [], "scanners": [], "hard_scan_issues": []}
 
@@ -658,13 +753,14 @@ def check_p4b(project: Path, state: dict[str, Any], args: argparse.Namespace | N
         if not re.search(core_pat, passed_lines, re.IGNORECASE):
             errors.append(f"核心业务能力测试未在真实测试输出中通过（未匹配模式：{core_pat}）")
 
-    scanners, scanner_failures = run_optional_scanners(project)
+    scanners, scanner_failures = run_optional_scanners(project, include_deploy=False)
     extra["scanners"] = scanners
     errors.extend(scanner_failures)
 
-    hard_issues = builtin_hard_scan(project)
+    hard_issues = builtin_app_scan(project)
     extra["hard_scan_issues"] = hard_issues
     errors.extend(hard_issues)
+    errors.extend(detect_early_deploy_files(project, state))
 
     if state.get("mode") == "mutating":
         errors.extend(check_mutating_security_tests(project))
@@ -682,6 +778,7 @@ def check_p4b(project: Path, state: dict[str, Any], args: argparse.Namespace | N
 
 
 def check_p5(project: Path, state: dict[str, Any], args: argparse.Namespace | None = None) -> tuple[list[str], dict[str, Any]]:
+    """v3.4 P5：独立全面真环境测试门禁（专注功能/安全/容错/持久化测试，严禁抢跑部署与发布）。"""
     errors: list[str] = []
     extra: dict[str, Any] = {"evidence_files": []}
 
@@ -701,18 +798,98 @@ def check_p5(project: Path, state: dict[str, Any], args: argparse.Namespace | No
     evidence_files: list[str] = []
     if vibe_dir.exists():
         for p in vibe_dir.rglob("*"):
-            if p.is_file() and p.suffix.lower() in evidence_exts:
+            if p.is_file() and p.suffix.lower() in evidence_exts and p.name.lower().startswith("05-"):
                 evidence_files.append(p.relative_to(project).as_posix())
     extra["evidence_files"] = sorted(evidence_files)
     if not evidence_files and not bool(getattr(args, "allow_no_screenshots", False)):
-        errors.append("docs/vibe/ 下未找到 E2E 截图或日志证据文件（无浏览器环境可加 --allow-no-screenshots）")
+        errors.append("docs/vibe/ 下未找到 P5 测试日志或截图证据文件（05-*.log / 05-*.png，无浏览器环境可加 --allow-no-screenshots）")
+
+    # P5 复查应用层红线并防抢跑部署文件
+    errors.extend(builtin_app_scan(project))
+    errors.extend(detect_early_deploy_files(project, state))
+
+    ops_doc = project / "docs" / "vibe" / "04-ops-readiness.md"
+    if ops_doc.exists() and read_text(ops_doc).strip():
+        unresolved_ops = has_unresolved_issue(read_text(ops_doc))
+        if unresolved_ops:
+            errors.append(f"docs/vibe/04-ops-readiness.md 存在未关闭 BLOCKER/FAIL: {unresolved_ops[0]}")
+
+    return errors, extra
+
+
+def check_p6(project: Path, state: dict[str, Any], args: argparse.Namespace | None = None) -> tuple[list[str], dict[str, Any]]:
+    """v3.4 P6：专属生产部署形态设计、部署红线扫描、真机部署与回滚验证，并签发 06-release-gate.json。"""
+    errors: list[str] = []
+    extra: dict[str, Any] = {"deploy_artifacts": [], "deploy_evidence": [], "scanners": [], "hard_scan_issues": []}
+
+    if not state["gates"]["p5"].get("approved"):
+        errors.append("前置门禁未通过：P5（全面真环境测试）尚未获得人工 approve p5，禁止进入 P6 生产部署")
+
+    agents_md = project / "AGENTS.md"
+    expected_hash = state.get("agents_guard_sha256")
+    actual_hash = extract_guard_hash(agents_md)
+    if not agents_md.exists() or not actual_hash or actual_hash != expected_hash:
+        errors.append("根 AGENTS.md 安全红线区块（VIBE-GUARD）缺失或已被篡改")
+
+    deploy_report = project / "docs" / "vibe" / "06-deploy-report.md"
+    if not deploy_report.exists() or not read_text(deploy_report).strip():
+        errors.append("缺少或为空: docs/vibe/06-deploy-report.md")
+    else:
+        unresolved = has_unresolved_issue(read_text(deploy_report))
+        if unresolved:
+            errors.append(f"docs/vibe/06-deploy-report.md 存在未关闭 FAIL/BLOCKER: {unresolved[0]}")
+
+    deploy_artifacts = find_deploy_artifacts(project)
+    extra["deploy_artifacts"] = deploy_artifacts
+    if not deploy_artifacts:
+        errors.append("P6 阶段未检测到任何生产部署交付物（如 deploy/、docker-compose.yml、Dockerfile、*.service 或 k8s/）")
+
+    delivery_docs = [
+        rel
+        for rel in ("deploy/DEPLOY.md", "DEPLOY.md", "README.md")
+        if (project / rel).is_file() and read_text(project / rel).strip()
+    ]
+    extra["delivery_docs"] = delivery_docs
+    if not delivery_docs:
+        errors.append("P6 阶段缺少面向运维的交付 Markdown 手册（至少需提供 deploy/DEPLOY.md 或根目录 README.md）")
+
+    vibe_dir = project / "docs" / "vibe"
+    evidence_exts = {".log", ".txt", ".png", ".jpg", ".jpeg", ".webp"}
+    deploy_evidence: list[str] = []
+    if vibe_dir.exists():
+        for p in vibe_dir.rglob("*"):
+            if p.is_file() and p.suffix.lower() in evidence_exts and p.name.lower().startswith("06-"):
+                deploy_evidence.append(p.relative_to(project).as_posix())
+    extra["deploy_evidence"] = sorted(deploy_evidence)
+    if not deploy_evidence and not bool(getattr(args, "allow_no_deploy_logs", False)):
+        errors.append("docs/vibe/ 下未找到 P6 部署演练日志证据文件（如 06-deploy.log；纯静态模板演练可加 --allow-no-deploy-logs）")
+
+    # P6 专属部署安全硬扫描 + 外部扫描器（含 hadolint）
+    hard_issues = builtin_deploy_scan(project)
+    extra["hard_scan_issues"] = hard_issues
+    errors.extend(hard_issues)
+
+    scanners, scanner_failures = run_optional_scanners(project, include_deploy=True)
+    extra["scanners"] = scanners
+    errors.extend(scanner_failures)
+
+    ops_doc = project / "docs" / "vibe" / "04-ops-readiness.md"
+    if ops_doc.exists() and read_text(ops_doc).strip():
+        unresolved_ops = has_unresolved_issue(read_text(ops_doc))
+        if unresolved_ops:
+            errors.append(f"docs/vibe/04-ops-readiness.md 存在未关闭 BLOCKER/FAIL: {unresolved_ops[0]}")
 
     p4a_gate = state["gates"]["p4a"]
     p4b_gate = state["gates"]["p4b"]
-    scanners = p4b_gate.get("scanners", [])
-    unverified = [f"{s['tool']} ({s.get('reason', 'skipped')})" for s in scanners if s.get("status") == "SKIPPED"]
+    p5_gate = state["gates"]["p5"]
+    merged_scanners: dict[str, dict[str, Any]] = {}
+    for s in list(p4b_gate.get("scanners", [])) + scanners:
+        merged_scanners[s["tool"]] = s
+    all_scanners = list(merged_scanners.values())
+    unverified = [f"{s['tool']} ({s.get('reason', 'skipped')})" for s in all_scanners if s.get("status") == "SKIPPED"]
 
     release_gate = {
+        "schema_version": SCHEMA_VERSION,
         "generated_at": now_iso(),
         "project_name": state.get("project_name"),
         "mode": state.get("mode"),
@@ -727,9 +904,12 @@ def check_p5(project: Path, state: dict[str, Any], args: argparse.Namespace | No
             }
             for c in p4b_gate.get("command_results", [])
         ],
-        "scanners": scanners,
+        "p5_test_evidence": p5_gate.get("evidence_files", []),
+        "p6_deploy_artifacts": deploy_artifacts,
+        "p6_delivery_docs": delivery_docs,
+        "p6_deploy_evidence": deploy_evidence,
+        "scanners": all_scanners,
         "unverified_items": unverified,
-        "e2e_evidence": extra["evidence_files"],
         "approvals": {
             g: {
                 "approved": state["gates"][g].get("approved"),
@@ -740,7 +920,7 @@ def check_p5(project: Path, state: dict[str, Any], args: argparse.Namespace | No
         },
         "blocking_errors": errors,
     }
-    write_json(project / "docs" / "vibe" / "05-release-gate.json", release_gate)
+    write_json(project / "docs" / "vibe" / "06-release-gate.json", release_gate)
     return errors, extra
 
 
@@ -751,6 +931,7 @@ CHECKERS = {
     "p4a": check_p4a,
     "p4b": check_p4b,
     "p5": check_p5,
+    "p6": check_p6,
 }
 
 
@@ -819,11 +1000,11 @@ def cmd_init(args: argparse.Namespace) -> int:
     }
     save_state(project, state)
 
-    print(f"[OK] 已初始化项目 `{args.name}`（mode={args.mode}）")
+    print(f"[OK] 已初始化项目 `{args.name}`（mode={args.mode}，schema=v{SCHEMA_VERSION}）")
     print(f"  - 控制中枢: {agents_path}")
     print(f"  - 状态文件: {state_path}")
     print(f"  - 产物目录: {project / 'docs' / 'vibe'}")
-    print("下一步：进入 P1（devops-brainstorming -> frontend-design），完成后运行 check p1。")
+    print("下一步：进入 P1（devops-brainstorming -> ui-ux-pro-max -> frontend-design），完成后运行 check p1。")
     return 0
 
 
@@ -913,7 +1094,7 @@ def cmd_status(args: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Ops Vibe Coding v3.3 确定性门禁引擎")
+    parser = argparse.ArgumentParser(description="Ops Vibe Coding v3.4 确定性门禁引擎")
     sub = parser.add_subparsers(dest="command", required=True)
 
     p_init = sub.add_parser("init", help="初始化目标项目")
@@ -924,14 +1105,15 @@ def build_parser() -> argparse.ArgumentParser:
     p_init.set_defaults(func=cmd_init)
 
     p_check = sub.add_parser("check", help="执行指定阶段硬校验")
-    p_check.add_argument("stage", choices=STAGES, help="阶段名称 (p1..p5)")
+    p_check.add_argument("stage", choices=STAGES, help="阶段名称 (p1..p6)")
     p_check.add_argument("--project", default=".", help="目标项目目录（默认当前目录）")
     p_check.add_argument("--allow-skip-frontend", action="store_true", help="离线演练时显式允许跳过前端构建")
     p_check.add_argument("--allow-no-screenshots", action="store_true", help="无浏览器环境时显式允许无截图证据")
+    p_check.add_argument("--allow-no-deploy-logs", action="store_true", help="P6 纯静态部署模板演练时显式允许无实机部署日志")
     p_check.set_defaults(func=cmd_check)
 
     p_approve = sub.add_parser("approve", help="人类批准阶段放行")
-    p_approve.add_argument("stage", choices=HUMAN_GATES, help="人工验收阶段 (p1..p5)")
+    p_approve.add_argument("stage", choices=HUMAN_GATES, help="人工验收阶段 (p1..p6)")
     p_approve.add_argument("--project", default=".", help="目标项目目录（默认当前目录）")
     p_approve.add_argument("--by", default="", help="批准人标识（默认系统用户名）")
     p_approve.add_argument("--note", default="", help="批准备注")

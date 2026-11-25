@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import html
+import logging
 import smtplib
 import socket
 import ssl
@@ -17,6 +18,8 @@ from typing import Any, Callable
 from .config import Settings
 from .crypto import decrypt_secret
 from .storage import Storage, now_str
+
+logger = logging.getLogger("ops_inspect.mailer")
 
 
 class PushConflictError(RuntimeError):
@@ -238,6 +241,19 @@ def _is_timeout_exception(exc: BaseException) -> bool:
             return True
         cur = cur.__cause__ or cur.__context__
     return False
+
+
+def _sanitize_smtp_error(exc: Exception) -> str:
+    """将底层 SMTP/Socket 异常映射为脱敏中文运维提示，避免向前端暴露内部堆栈或网络细节。"""
+    if isinstance(exc, smtplib.SMTPAuthenticationError):
+        return "SMTP 邮箱认证失败，请核对发件箱账号或邮箱授权码是否正确。"
+    if isinstance(exc, smtplib.SMTPRecipientsRefused):
+        return "收件人邮箱被邮件服务器拒收，请核对收件人地址。"
+    if isinstance(exc, smtplib.SMTPSenderRefused):
+        return "发件人地址被邮件服务器拒绝，请确认发件人与登录账号一致。"
+    if isinstance(exc, (smtplib.SMTPConnectError, OSError)):
+        return "无法连接 SMTP 邮件服务器，请核对主机地址、端口与加密方式（SSL/STARTTLS）。"
+    return f"SMTP 邮件投递失败（{exc.__class__.__name__}），请凭操作编号查看服务端日志排查。"
 
 
 def default_smtp_send(
@@ -467,6 +483,12 @@ class MailerService:
                 self.smtp_sender(runtime_cfg, recipients, subject, body_md, body_html)
             except Exception as exc:
                 if _is_timeout_exception(exc):
+                    logger.error(
+                        "SMTP 投递超时（未自动重试） op_id=%s host=%s:%s",
+                        op_id,
+                        runtime_cfg.smtp_host,
+                        runtime_cfg.smtp_port,
+                    )
                     self.storage.add_outbox(
                         op_id=op_id,
                         delivery_mode="smtp",
@@ -477,6 +499,14 @@ class MailerService:
                         error="SMTP 响应超时（结果未知，已禁止自动重试）",
                     )
                     raise SmtpTimeoutError("邮件服务器响应超时，投递结果未知，系统已禁止自动重试。") from exc
+                safe_msg = _sanitize_smtp_error(exc)
+                logger.exception(
+                    "SMTP 投递失败 op_id=%s host=%s:%s err_type=%s",
+                    op_id,
+                    runtime_cfg.smtp_host,
+                    runtime_cfg.smtp_port,
+                    exc.__class__.__name__,
+                )
                 self.storage.add_outbox(
                     op_id=op_id,
                     delivery_mode="smtp",
@@ -484,9 +514,9 @@ class MailerService:
                     recipients=rec_str,
                     subject=subject,
                     body_md=body_md,
-                    error=f"SMTP 发送失败：{exc.__class__.__name__}",
+                    error=safe_msg,
                 )
-                raise SmtpDeliveryError(f"邮件发送失败：{exc}") from exc
+                raise SmtpDeliveryError(safe_msg) from exc
 
             return self.storage.add_outbox(
                 op_id=op_id,

@@ -1675,3 +1675,37 @@ tbody tr:hover {
   padding: 7px 9px;
   font-size: 12.5px;
 }
+
+.auth-gate {
+  max-width: 480px;
+  margin: 64px auto 0;
+  padding: 36px 28px;
+  text-align: center;
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+}
+
+.auth-gate-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--surface-subtle);
+  border: 1px solid var(--line);
+  color: var(--ink-700);
+  display: grid;
+  place-items: center;
+}
+
+.auth-gate h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink-900);
+}
+
+.auth-gate-desc {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--ink-500);
+  max-width: 380px;
+}

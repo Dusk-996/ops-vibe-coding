@@ -54,6 +54,9 @@ class Settings:
     smtp_use_ssl: bool = False
     smtp_timeout_seconds: int = 10
     disable_scheduler: bool = False
+    ssh_strict_host_key: bool = True
+    max_outbox_rows: int = 500
+    max_audit_rows: int = 2000
 
     @property
     def effective_master_key(self) -> str:
@@ -71,6 +74,8 @@ class Settings:
         problems: list[str] = []
         if _is_weak_secret(self.auth_secret):
             problems.append("AUTH_SECRET 缺失、不足 12 位或仍为占位符")
+        if self.credential_master_key.strip() and _is_weak_secret(self.credential_master_key):
+            problems.append("CREDENTIAL_MASTER_KEY 不足 12 位或仍为占位符")
         if _is_weak_secret(self.admin_cred):
             problems.append("ADMIN_PASSWORD 缺失、不足 12 位或仍为占位符")
         if _is_weak_secret(self.viewer_cred):
@@ -122,6 +127,15 @@ def load_settings(env_file: Path | None = None) -> Settings:
     smtp_ssl_env = os.environ.get("SMTP_USE_SSL", "").strip().lower()
     smtp_use_ssl = smtp_ssl_env in ("1", "true", "yes") or (smtp_ssl_env == "" and smtp_port == 465)
 
+    strict_hk_env = os.environ.get("SSH_STRICT_HOST_KEY", "").strip().lower()
+    if strict_hk_env in ("1", "true", "yes"):
+        ssh_strict_host_key = True
+    elif strict_hk_env in ("0", "false", "no"):
+        ssh_strict_host_key = False
+    else:
+        # 生产环境默认强制校验 known_hosts，防止静默降级 AutoAddPolicy
+        ssh_strict_host_key = not is_dev
+
     settings = Settings(
         app_env=app_env,
         auth_secret=auth_secret,
@@ -143,6 +157,9 @@ def load_settings(env_file: Path | None = None) -> Settings:
         smtp_use_ssl=smtp_use_ssl,
         smtp_timeout_seconds=max(1, int(os.environ.get("SMTP_TIMEOUT_SECONDS", "10"))),
         disable_scheduler=os.environ.get("DISABLE_SCHEDULER", "0").strip().lower() in ("1", "true", "yes"),
+        ssh_strict_host_key=ssh_strict_host_key,
+        max_outbox_rows=max(50, int(os.environ.get("MAX_OUTBOX_ROWS", "500"))),
+        max_audit_rows=max(100, int(os.environ.get("MAX_AUDIT_ROWS", "2000"))),
     )
     settings.validate_production_security()
     return settings

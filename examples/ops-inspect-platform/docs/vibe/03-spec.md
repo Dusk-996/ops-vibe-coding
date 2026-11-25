@@ -92,12 +92,12 @@
 
 - **鉴权机制**：`POST /api/auth/login` 验证账号密码后签发 HMAC-SHA256 Token（`Authorization: Bearer <token>`）；
 - **角色矩阵**：
-  - 未携带或无效 Token 访问受保护写接口 → **`401 Unauthorized`**；
+  - 除 `GET /health` 与 `POST /api/auth/login` 外，全部读接口需 `viewer` 或 `admin` 登录（匿名一律 `401`）；
+  - 未携带或无效 Token 访问受保护接口 → **`401 Unauthorized`**；
   - `viewer` 角色访问任意写接口（增删改、导入、巡检、改定时、推邮件） → **`403 Forbidden`**；
-  - `viewer` / `admin` 均可查看列表、导出 CSV/JSON、下载 `.md`、查看收件箱与审计；
-  - `GET /health` 免鉴权，供容器探针使用。
-- **生产 Fail-Fast**：当 `APP_ENV=production` 时，若 `AUTH_SECRET`、`ADMIN_PASSWORD`、`VIEWER_PASSWORD` 任一缺失、长度不足 12 位或包含 `changeme` 占位符，应用启动时立即抛错退出，绝不回退弱默认密码。
-- **安全红线**：无 `:latest` 镜像、容器非 root 运行、无 `reload=True`、无 `CORS *`（由 `CORS_ORIGINS` 白名单控制）、生产前端 `VITE_USE_MOCK=false`。
+  - `GET /health` 免鉴权，供进程存活探活使用。
+- **生产 Fail-Fast**：当 `APP_ENV=production` 时，若 `AUTH_SECRET`、可选独立 `CREDENTIAL_MASTER_KEY`、`ADMIN_PASSWORD`、`VIEWER_PASSWORD` 任一缺失/长度不足 12 位/含占位符，或 `CORS_ORIGINS` 含 `*`，应用启动时立即抛错拒启。
+- **应用安全红线**：无 `reload=True`、无 `CORS *`、生产前端 `VITE_USE_MOCK=false`（生产部署打包、容器/服务权限与备份回滚红线留待 P6 部署阶段设计与校验）。
 
 ---
 

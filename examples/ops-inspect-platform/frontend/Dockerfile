@@ -1,24 +1,30 @@
-FROM node:20.18-alpine AS builder
+# syntax=docker/dockerfile:1.7
+# 前端生产镜像（Node 多阶段编译 + 官方非 root Nginx 托管，强制锁死 VITE_USE_MOCK=false）
 
-WORKDIR /app
+FROM node:20.18.1-alpine3.20 AS builder
 
-COPY package.json package-lock.json* ./
-RUN npm install --no-audit --no-fund
+ARG NPM_REGISTRY=https://registry.npmjs.org
+ENV VITE_USE_MOCK=false
 
-COPY . .
+WORKDIR /build
+COPY package.json package-lock.json ./
+RUN npm config set registry "${NPM_REGISTRY}" && npm ci --no-audit --no-fund
 
-ARG VITE_USE_MOCK=false
-ENV VITE_USE_MOCK=${VITE_USE_MOCK}
-
+COPY index.html vite.config.js .env.production ./
+COPY src ./src
 RUN npm run build
 
-FROM nginxinc/nginx-unprivileged:1.27-alpine
+FROM nginxinc/nginx-unprivileged:1.27.3-alpine AS runtime
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=builder /app/dist /usr/share/nginx/html
+COPY --chown=101:101 nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder --chown=101:101 /build/dist /usr/share/nginx/html
 
 USER 101
 
 EXPOSE 8080
+STOPSIGNAL SIGQUIT
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD wget -q -O /dev/null http://127.0.0.1:8080/health || exit 1
 
 CMD ["nginx", "-g", "daemon off;"]

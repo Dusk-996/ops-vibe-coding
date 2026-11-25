@@ -15,9 +15,18 @@ def now_str() -> str:
 
 
 class Storage:
-    def __init__(self, db_path: Path, seed_defaults: bool = True) -> None:
+    def __init__(
+        self,
+        db_path: Path,
+        seed_defaults: bool = True,
+        *,
+        max_outbox_rows: int = 500,
+        max_audit_rows: int = 2000,
+    ) -> None:
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        self.max_outbox_rows = max(1, int(max_outbox_rows))
+        self.max_audit_rows = max(1, int(max_audit_rows))
         self._lock = threading.RLock()
         self._init_schema()
         if seed_defaults:
@@ -453,6 +462,14 @@ class Storage:
                 """,
                 (op_id, delivery_mode, status_code, recipients, subject, body_md, error, ts),
             )
+            # 按主键保留最近 max_outbox_rows 条发件记录，防止大正文长期增长撑爆磁盘
+            conn.execute(
+                """
+                DELETE FROM outbox_messages
+                WHERE id <= (SELECT id FROM outbox_messages ORDER BY id DESC LIMIT 1 OFFSET ?)
+                """,
+                (self.max_outbox_rows,),
+            )
             row = conn.execute("SELECT * FROM outbox_messages WHERE id = ?", (cur.lastrowid,)).fetchone()
             return dict(row)
 
@@ -479,6 +496,14 @@ class Storage:
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
                 (op_id, actor, role, action, http_status, detail, ts),
+            )
+            # 按主键保留最近 max_audit_rows 条审计记录
+            conn.execute(
+                """
+                DELETE FROM audit_logs
+                WHERE id <= (SELECT id FROM audit_logs ORDER BY id DESC LIMIT 1 OFFSET ?)
+                """,
+                (self.max_audit_rows,),
             )
             row = conn.execute("SELECT * FROM audit_logs WHERE id = ?", (cur.lastrowid,)).fetchone()
             return dict(row)

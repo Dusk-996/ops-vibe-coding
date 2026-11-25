@@ -1,0 +1,40 @@
+﻿=== [0/4] 官方 Docker Compose v5.7.0 Schema 与配置解析校验 ===
+[PASS] docker compose config --quiet 退出码 0（YAML/依赖/健康检查/卷挂载/资源限额解析通过）
+  service: backend
+  service: frontend
+  image: ops-inspect-frontend:1.0.0
+  image: ops-inspect-backend:1.0.0
+
+=== [1/4] Bash 语法静态检查 (bash -n) ===
+[PASS] deploy/build-and-deploy.sh syntax OK
+[PASS] deploy/backup-db.sh syntax OK
+
+=== [2/4] 发布脚本防 :latest 拦截实测 ===
+exit=1 | [2026-11-26 00:27:32] [ERROR] 禁止使用空版本号或 latest 标签，请指定明确版本（例如 1.0.0 或 20261126.1）。
+[PASS] 禁止 latest 版本标签拦截生效
+
+=== [3/4] WSL 真 Linux 环境 SQLite WAL 在线热备 -> 灾难误删 -> 校验恢复演练 ===
+演练前数据统计 (targets smtp_profiles): 8 2
+[2026-11-26 00:27:32] [INFO] 执行 SQLite WAL 一致性在线热备: /opt/ops-inspect-test/p6-drill/prod_sim.db -> /opt/ops-inspect-test/p6-drill/backups/ops_inspect-20261126-002732.db
+integrity_check=ok tables=7
+[2026-11-26 00:27:32] [INFO] 本地在线热备成功: /opt/ops-inspect-test/p6-drill/backups/ops_inspect-20261126-002732.db
+生成备份文件: /opt/ops-inspect-test/p6-drill/backups/ops_inspect-20261126-002732.db (49152 bytes)
+模拟误删后统计: 0 0
+[2026-11-26 00:27:32] [INFO] 校验备份文件 SHA-256...
+/opt/ops-inspect-test/p6-drill/backups/ops_inspect-20261126-002732.db: OK
+[2026-11-26 00:27:32] [INFO] 校验备份文件 SQLite 完整性...
+integrity_check=ok tables=7
+[2026-11-26 00:27:32] [INFO] 已留存恢复前现状副本: /opt/ops-inspect-test/p6-drill/prod_sim.db.pre-restore.20261126-002732
+integrity_check=ok tables=7
+[2026-11-26 00:27:32] [INFO] 数据库恢复完成并已通过完整性复核: /opt/ops-inspect-test/p6-drill/prod_sim.db
+恢复后数据统计 (targets smtp_profiles): 8 2
+[PASS] SQLite WAL 热备与灾难恢复 100% 一致性验证通过
+
+=== [4/4] Nginx 配置关键安全指令核对 ===
+2:    listen 8080;
+4:    server_tokens off;
+10:    client_max_body_size 3m;
+13:    add_header X-Content-Type-Options "nosniff" always;
+25:        proxy_pass http://backend:8000/health;
+37:        proxy_pass http://backend:8000/api/;
+[PASS] Nginx 非 root 8080 与反代/安全头配置核对通过

@@ -1,15 +1,16 @@
 {
-  "generated_at": "2026-11-25T22:59:33+08:00",
-  "project_name": "ops-inspect-demo",
+  "schema_version": "3.4",
+  "generated_at": "2026-11-26T00:44:05+08:00",
+  "project_name": "ops-inspect-platform",
   "mode": "mutating",
   "ready_for_human_approval": true,
   "p4a_commands": [
     {
       "command": "npm --prefix frontend run build",
-      "cwd": "J:/gmini/01/demo",
+      "cwd": ".",
       "returncode": 0,
       "passed": true,
-      "stdout_tail": "\n> ops-inspect-frontend@1.0.0 build\n> vite build\n\n\u001b[36mvite v6.4.6 \u001b[32mbuilding for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 43 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                 \u001b[39m\u001b[1m\u001b[2m  0.42 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:  0.32 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-DHTpgNpi.css  \u001b[39m\u001b[1m\u001b[2m 22.34 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:  4.81 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-Brz7JFZL.js   \u001b[39m\u001b[1m\u001b[2m230.47 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip: 71.45 kB\u001b[22m\n\u001b[32m✓ built in 517ms\u001b[39m\n",
+      "stdout_tail": "\n> ops-inspect-frontend@1.0.0 build\n> vite build\n\n\u001b[36mvite v6.4.6 \u001b[32mbuilding for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 43 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                 \u001b[39m\u001b[1m\u001b[2m  0.42 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:  0.32 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-r8bKJ9IS.css  \u001b[39m\u001b[1m\u001b[2m 22.78 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:  4.90 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-Cs3dqeZu.js   \u001b[39m\u001b[1m\u001b[2m231.58 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip: 71.77 kB\u001b[22m\n\u001b[32m✓ built in 511ms\u001b[39m\n",
       "stderr_tail": "",
       "name": "frontend_build"
     }
@@ -21,6 +22,26 @@
       "returncode": 0,
       "passed": true
     }
+  ],
+  "p5_test_evidence": [
+    "docs/vibe/05-e2e.log",
+    "docs/vibe/05-pytest-linux.log"
+  ],
+  "p6_deploy_artifacts": [
+    "backend/Dockerfile",
+    "deploy/DEPLOY.md",
+    "deploy/backup-db.sh",
+    "deploy/build-and-deploy.sh",
+    "docker-compose.yml",
+    "frontend/Dockerfile",
+    "frontend/nginx.conf"
+  ],
+  "p6_delivery_docs": [
+    "deploy/DEPLOY.md",
+    "README.md"
+  ],
+  "p6_deploy_evidence": [
+    "docs/vibe/06-deploy.log"
   ],
   "scanners": [
     {
@@ -49,9 +70,6 @@
     "ruff (not installed)",
     "bandit (not installed)",
     "hadolint (not installed)"
-  ],
-  "e2e_evidence": [
-    "docs/vibe/05-e2e.log"
   ],
   "approvals": {
     "p1": {
@@ -82,7 +100,12 @@
     "p5": {
       "approved": true,
       "approved_by": "user",
-      "approved_at": "2026-11-25T22:59:33+08:00"
+      "approved_at": "2026-11-26T00:22:26+08:00"
+    },
+    "p6": {
+      "approved": true,
+      "approved_by": "user",
+      "approved_at": "2026-11-26T00:37:33+08:00"
     }
   },
   "blocking_errors": []

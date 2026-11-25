@@ -1,39 +1,93 @@
+# 智能服务器巡检与定时邮件推送平台 — P6 生产级 Docker Compose 编排
+# 使用方式：cp .env.example .env（替换为强密钥与真实密码）→ bash deploy/build-and-deploy.sh build 1.0.0 → bash deploy/build-and-deploy.sh up 1.0.0
+
+name: ops-inspect-platform
+
 services:
   backend:
+    image: ops-inspect-backend:${APP_VERSION:-1.0.0}
     build:
       context: ./backend
       dockerfile: Dockerfile
+      args:
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://pypi.org/simple}
     container_name: ops-inspect-backend
     restart: unless-stopped
     env_file:
       - .env
     environment:
+      APP_ENV: production
       DB_PATH: /data/ops_inspect.db
       SSH_KEYS_DIR: /run/ssh_keys
+      SSH_STRICT_HOST_KEY: ${SSH_STRICT_HOST_KEY:-true}
+      DISABLE_SCHEDULER: ${DISABLE_SCHEDULER:-0}
+      MAX_OUTBOX_ROWS: ${MAX_OUTBOX_ROWS:-500}
+      MAX_AUDIT_ROWS: ${MAX_AUDIT_ROWS:-2000}
     volumes:
       - ops_inspect_data:/data
-    ports:
-      - "8000:8000"
+      - ${SSH_KEYS_HOST_DIR:-./ssh_keys}:/run/ssh_keys:ro
+    expose:
+      - "8000"
+    stop_grace_period: 15s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    mem_limit: 512m
+    cpus: 1.0
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
-      interval: 15s
+      interval: 30s
       timeout: 5s
       retries: 3
       start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+    networks:
+      - ops_net
 
   frontend:
+    image: ops-inspect-frontend:${APP_VERSION:-1.0.0}
     build:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        VITE_USE_MOCK: "false"
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmjs.org}
     container_name: ops-inspect-frontend
     restart: unless-stopped
     depends_on:
       backend:
         condition: service_healthy
     ports:
-      - "8080:8080"
+      - "${APP_BIND_IP:-127.0.0.1}:${APP_PORT:-8080}:8080"
+    stop_grace_period: 10s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    mem_limit: 128m
+    cpus: 0.5
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - ops_net
 
 volumes:
   ops_inspect_data:
+    name: ops_inspect_data
+
+networks:
+  ops_net:
+    driver: bridge

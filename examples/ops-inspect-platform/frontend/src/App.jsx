@@ -22,7 +22,7 @@ function readHashRoute() {
 }
 
 function errorTitleByStatus(status) {
-  if (status === 401) return "需要管理员登录";
+  if (status === 401) return "请先登录系统";
   if (status === 403) return "当前账号无操作权限";
   if (status === 409) return "任务正在执行中";
   if (status === 504) return "目标响应超时";
@@ -103,10 +103,30 @@ export default function App() {
 
   const initConnection = useCallback(async () => {
     await detectBackendAvailability();
-    setPreviewMode(isPreviewFallbackMode());
+    const isPreview = isPreviewFallbackMode();
+    setPreviewMode(isPreview);
+    if (!isPreview && !getSavedSession().token) {
+      setSessionUser(null);
+      return;
+    }
     try {
       await refreshAll();
     } catch (err) {
+      if (err.status === 401 && !isPreview) {
+        clearSession();
+        setSessionUser(null);
+        setTargets([]);
+        setOutbox([]);
+        setAudits([]);
+        setLoginOpen(true);
+        showToast({
+          type: "warn",
+          title: "登录状态已失效",
+          msg: "请重新登录系统以查看服务器资产与巡检配置。",
+          opId: err.opId || "",
+        });
+        return;
+      }
       showToast({
         type: "err",
         title: "页面数据加载失败",
@@ -132,19 +152,30 @@ export default function App() {
 
   const handleApiError = useCallback(
     async (err, customTitle) => {
+      if (err.status === 401 && !previewMode) {
+        clearSession();
+        setSessionUser(null);
+        setTargets([]);
+        setOutbox([]);
+        setAudits([]);
+        setLoginOpen(true);
+      }
       showToast({
         type: err.status === 409 ? "warn" : "err",
         title: customTitle || errorTitleByStatus(err.status),
         msg: err.message,
         opId: err.opId || "",
       });
+      if (err.status === 401 && !previewMode) {
+        return;
+      }
       try {
         await refreshAll();
       } catch {
         // 忽略二次刷新异常
       }
     },
-    [refreshAll, showToast]
+    [previewMode, refreshAll, showToast]
   );
 
   const handlePreviewRoleChange = (role) => {
@@ -172,10 +203,13 @@ export default function App() {
   const handleLogout = () => {
     clearSession();
     setSessionUser(null);
+    setTargets([]);
+    setOutbox([]);
+    setAudits([]);
     showToast({
       type: "warn",
       title: "已退出登录",
-      msg: "当前处于未登录状态，发起巡检、变更配置或推送邮件前需重新登录。",
+      msg: "已清除本地会话与页面数据，重新登录后可继续查看与巡检。",
     });
   };
 
@@ -556,7 +590,25 @@ export default function App() {
 
       <ToastCard toast={toast} onClose={clearToast} />
 
-      {route === "servers" ? (
+      {!previewMode && !sessionUser ? (
+        <main className="page">
+          <section className="card auth-gate" aria-label="登录访问引导">
+            <div className="auth-gate-icon" aria-hidden="true">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9">
+                <rect x="3" y="11" width="18" height="11" rx="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </div>
+            <h2>请登录智能服务器巡检系统</h2>
+            <p className="auth-gate-desc">
+              为保护内网服务器资产、SSH 凭据别名与操作审计信息，查看与巡检操作均需验证运维账号。
+            </p>
+            <button className="btn btn-primary" type="button" onClick={() => setLoginOpen(true)}>
+              立即登录
+            </button>
+          </section>
+        </main>
+      ) : route === "servers" ? (
         <ServersPage
           targets={targets}
           inspectingAll={inspectingAll}

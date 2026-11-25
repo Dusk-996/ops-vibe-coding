@@ -1,0 +1,36 @@
+============================= test session starts ==============================
+platform linux -- Python 3.14.4, pytest-8.4.2, pluggy-1.7.0 -- /opt/ops-inspect-test/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /opt/ops-inspect-test/backend
+configfile: pytest.ini
+plugins: anyio-4.16.0
+collecting ... collected 20 items
+
+../../../../opt/ops-inspect-test/backend/tests/test_api.py::test_local_collect_real_system_metrics PASSED [  5%]
+../../../../opt/ops-inspect-test/backend/tests/test_api.py::test_ssh_collect_readonly_whitelist_and_timeout_no_retry PASSED [ 10%]
+../../../../opt/ops-inspect-test/backend/tests/test_api.py::test_inspect_all_concurrent_timeout_isolation PASSED [ 15%]
+../../../../opt/ops-inspect-test/backend/tests/test_api.py::test_import_preview_commit_and_csv_formula_escape PASSED [ 20%]
+../../../../opt/ops-inspect-test/backend/tests/test_api.py::test_security_401_anonymous_reads_blocked PASSED [ 25%]
+../../../../opt/ops-inspect-test/backend/tests/test_api.py::test_security_401_unauthorized_write_blocked PASSED [ 30%]
+../../../../opt/ops-inspect-test/backend/tests/test_api.py::test_security_403_viewer_forbidden_write_blocked PASSED [ 35%]
+../../../../opt/ops-inspect-test/backend/tests/test_api.py::test_security_409_concurrent_push_conflict PASSED [ 40%]
+../../../../opt/ops-inspect-test/backend/tests/test_api.py::test_security_504_smtp_timeout_no_retry PASSED [ 45%]
+../../../../opt/ops-inspect-test/backend/tests/test_api.py::test_production_fail_fast_rejects_weak_secrets PASSED [ 50%]
+../../../../opt/ops-inspect-test/backend/tests/test_api.py::test_scheduler_tick_idempotent_same_minute PASSED [ 55%]
+../../../../opt/ops-inspect-test/backend/tests/test_api.py::test_smtp_web_config_encrypted_storage_and_hot_reload PASSED [ 60%]
+../../../../opt/ops-inspect-test/backend/tests/test_api.py::test_smtp_multi_profiles_save_switch_and_delete PASSED [ 65%]
+../../../../opt/ops-inspect-test/backend/tests/test_api.py::test_report_summary_shows_only_abnormal_details PASSED [ 70%]
+../../../../opt/ops-inspect-test/backend/tests/test_api.py::test_production_fail_fast_rejects_weak_master_key PASSED [ 75%]
+../../../../opt/ops-inspect-test/backend/tests/test_api.py::test_ssh_strict_host_key_and_output_limit PASSED [ 80%]
+../../../../opt/ops-inspect-test/backend/tests/test_api.py::test_scheduler_loop_error_logged_and_audited PASSED [ 85%]
+../../../../opt/ops-inspect-test/backend/tests/test_api.py::test_scheduler_shares_inspect_lock_with_manual_inspect PASSED [ 90%]
+../../../../opt/ops-inspect-test/backend/tests/test_api.py::test_smtp_error_sanitized_to_client PASSED [ 95%]
+../../../../opt/ops-inspect-test/backend/tests/test_api.py::test_storage_retention_pruning PASSED [100%]
+
+=============================== warnings summary ===============================
+../../../../opt/ops-inspect-test/.venv/lib/python3.14/site-packages/fastapi/testclient.py:1
+  /opt/ops-inspect-test/.venv/lib/python3.14/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 20 passed, 1 warning in 2.23s =========================

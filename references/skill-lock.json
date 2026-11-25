@@ -1,6 +1,6 @@
 {
-  "schema_version": "3.3",
-  "generated_at": "2026-11-25T22:46:19+08:00",
+  "schema_version": "3.4",
+  "generated_at": "2026-11-26T00:20:13+08:00",
   "skills_repo": "https://github.com/Dusk-996/skills-manager-backup.git",
   "skills_branch": "codex-vibe-v2",
   "deprecated_skills": [
@@ -43,8 +43,8 @@
       "source_repo": "skills-manager-backup",
       "branch": "codex-vibe-v2",
       "path": "stack-selector/SKILL.md",
-      "tuned_for_v3": false,
-      "sha256": "b31ea05687b7d8427d3a80318054228b68fe95898a1cf50d08fd53020b8e0317"
+      "tuned_for_v3": true,
+      "sha256": "fd824bc545ace97fe709b99288629d3f9f66ca3c6317d50b3b5502820ba102fa"
     },
     {
       "name": "grilling",
@@ -61,8 +61,8 @@
       "source_repo": "skills-manager-backup",
       "branch": "codex-vibe-v2",
       "path": "to-spec/SKILL.md",
-      "tuned_for_v3": false,
-      "sha256": "5fafcae1e0072ff3f1bda0da1a0090a098af74de8662e51e361f5c55e91fd794"
+      "tuned_for_v3": true,
+      "sha256": "f6c5e1fe9f534b50dd6ceb14e12656ff37272ce765f697626f2eeb5235591514"
     },
     {
       "name": "project-init",
@@ -71,7 +71,7 @@
       "branch": "codex-vibe-v2",
       "path": "project-init/SKILL.md",
       "tuned_for_v3": true,
-      "sha256": "092db2cb73a0c848ba2b5d8f7aa5e31ef82b218ffb749edfe3978e6d489f218c"
+      "sha256": "338f1b2fb808d789cf15280343c8bbd64c4025bee8e09b64947d2b8a3a5c39e3"
     },
     {
       "name": "devops-writing-plans",
@@ -88,8 +88,8 @@
       "source_repo": "skills-manager-backup",
       "branch": "codex-vibe-v2",
       "path": "html-to-mui-react/SKILL.md",
-      "tuned_for_v3": false,
-      "sha256": "3dbed66858a4632cf7a8848cae3a6cffb0f0b6bd7a32a5ff55e2582c38c44521"
+      "tuned_for_v3": true,
+      "sha256": "b07d30f04814afba1803845f2d3d05f6bd817d9723e8e7eaf6120000d0fb0089"
     },
     {
       "name": "prototype-parity-review",
@@ -97,8 +97,8 @@
       "source_repo": "skills-manager-backup",
       "branch": "codex-vibe-v2",
       "path": "prototype-parity-review/SKILL.md",
-      "tuned_for_v3": false,
-      "sha256": "f8de355aa9e3af489e33d7937b427d6d83a4cf1d950fd5a69a657714c1dadc98"
+      "tuned_for_v3": true,
+      "sha256": "2cbc0dba17234b52d51a01d97cfc199503cd400e75709d082b360e56245ca8ff"
     },
     {
       "name": "test-driven-development",
@@ -138,12 +138,12 @@
     },
     {
       "name": "ops-readiness-review",
-      "stage": "P4b",
+      "stage": "P4b/P6",
       "source_repo": "skills-manager-backup",
       "branch": "codex-vibe-v2",
       "path": "ops-readiness-review/SKILL.md",
-      "tuned_for_v3": false,
-      "sha256": "13ea5dc14613e40f0ad6da466efe4ce1f23923e810d5445a7c67afe494053824"
+      "tuned_for_v3": true,
+      "sha256": "2c980079a640c0460d710774558c8cc348e37e06e9852836778e82a2658af608"
     },
     {
       "name": "playwright-cli",

@@ -118,7 +118,8 @@ paths:
 
   /api/targets:
     get:
-      summary: 查询纳管目标列表与汇总 KPI
+      summary: 查询纳管目标列表与汇总 KPI（需 viewer/admin 登录）
+      security: [{ BearerAuth: [] }]
       parameters:
         - in: query
           name: q
@@ -138,6 +139,7 @@ paths:
       responses:
         '200':
           description: 目标列表与 KPI 汇总
+        '401': { description: 未登录或令牌过期 }
     post:
       summary: 登记单个目标服务器（静态字段，初始状态 PENDING）
       security: [{ BearerAuth: [] }]
@@ -217,13 +219,15 @@ paths:
 
   /api/targets/export:
     get:
-      summary: 导出目标连接信息与最新巡检指标（CSV UTF-8 BOM 防公式注入 / JSON）
+      summary: 导出目标连接信息与最新巡检指标（需 viewer/admin 登录，CSV UTF-8 BOM 防公式注入 / JSON）
+      security: [{ BearerAuth: [] }]
       parameters:
         - in: query
           name: format
           schema: { type: string, enum: [csv, json], default: csv }
       responses:
         '200': { description: 导出文件流 }
+        '401': { description: 未登录或令牌过期 }
 
   /api/inspect/run:
     post:
@@ -253,13 +257,15 @@ paths:
 
   /api/schedule:
     get:
-      summary: 获取每日定时推送配置与当前 SMTP 模式
+      summary: 获取每日定时推送配置与当前 SMTP 模式（需 viewer/admin 登录）
+      security: [{ BearerAuth: [] }]
       responses:
         '200':
           description: 定时配置
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ScheduleConfig' }
+        '401': { description: 未登录或令牌过期 }
     put:
       summary: 更新每日定时推送配置
       security: [{ BearerAuth: [] }]
@@ -275,9 +281,11 @@ paths:
 
   /api/smtp:
     get:
-      summary: 获取脱敏后的发件邮箱通道状态与已保存发件账号列表（永不回显授权码）
+      summary: 获取脱敏后的发件邮箱通道状态与已保存发件账号列表（需 viewer/admin 登录，永不回显授权码）
+      security: [{ BearerAuth: [] }]
       responses:
         '200': { description: 脱敏 SMTP 状态与账号存档列表 }
+        '401': { description: 未登录或令牌过期 }
     put:
       summary: 管理员新增/更新发件邮箱账号并激活（授权码经 Fernet 主密钥加密存库，免重启生效）
       security: [{ BearerAuth: [] }]
@@ -308,13 +316,15 @@ paths:
 
   /api/reports/markdown:
     get:
-      summary: 获取/下载最新 Markdown 巡检报告
+      summary: 获取/下载最新 Markdown 巡检报告（需 viewer/admin 登录）
+      security: [{ BearerAuth: [] }]
       responses:
         '200':
           description: Markdown 文本内容
           content:
             text/markdown:
               schema: { type: string }
+        '401': { description: 未登录或令牌过期 }
 
   /api/reports/push:
     post:
@@ -329,12 +339,16 @@ paths:
 
   /api/outbox:
     get:
-      summary: 查看邮件发送记录与本地模拟收件箱
+      summary: 查看邮件发送记录与本地模拟收件箱（需 viewer/admin 登录）
+      security: [{ BearerAuth: [] }]
       responses:
         '200': { description: 邮件记录列表 }
+        '401': { description: 未登录或令牌过期 }
 
   /api/audits:
     get:
-      summary: 查看全量操作与异常审计日志
+      summary: 查看全量操作与异常审计日志（需 viewer/admin 登录）
+      security: [{ BearerAuth: [] }]
       responses:
         '200': { description: 审计日志列表 }
+        '401': { description: 未登录或令牌过期 }

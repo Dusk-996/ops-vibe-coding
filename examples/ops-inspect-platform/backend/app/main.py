@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import logging
 import re
 import sqlite3
 import threading
@@ -31,6 +32,17 @@ from .mailer import (
 from .scheduler import InspectionScheduler
 from .storage import Storage
 
+logger = logging.getLogger("ops_inspect.main")
+
+
+def _configure_logging() -> None:
+    root_pkg = logging.getLogger("ops_inspect")
+    if not root_pkg.handlers:
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s [%(name)s] %(message)s"))
+        root_pkg.addHandler(handler)
+    root_pkg.setLevel(logging.INFO)
+
 MAX_IMPORT_BYTES = 2 * 1024 * 1024
 MAX_IMPORT_ROWS = 2000
 VALID_TYPES = {"物理机", "虚拟机", "容器节点"}
@@ -39,6 +51,13 @@ EMAIL_RE = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 HHMM_RE = re.compile(r"^([01][0-9]|2[0-3]):[0-5][0-9]$")
 
 ACTION_CN = {
+    "READ_TARGETS": "查看服务器列表",
+    "EXPORT_TARGETS": "导出服务器清单",
+    "READ_SCHEDULE": "查看定时推送配置",
+    "READ_SMTP": "查看发件箱配置",
+    "READ_REPORT": "查看巡检报告",
+    "READ_OUTBOX": "查看发件记录",
+    "READ_AUDITS": "查看操作审计日志",
     "CREATE_TARGET": "登记目标服务器",
     "UPDATE_TARGET": "修改目标服务器",
     "DELETE_TARGET": "删除目标服务器",
@@ -206,11 +225,17 @@ def create_app(
     mailer: MailerService | None = None,
     seed_defaults: bool = True,
 ) -> FastAPI:
+    _configure_logging()
     cfg = settings or load_settings()
-    store = storage or Storage(cfg.db_path, seed_defaults=seed_defaults)
+    store = storage or Storage(
+        cfg.db_path,
+        seed_defaults=seed_defaults,
+        max_outbox_rows=cfg.max_outbox_rows,
+        max_audit_rows=cfg.max_audit_rows,
+    )
     mail_svc = mailer or MailerService(cfg, store)
-    scheduler = InspectionScheduler(cfg, store, mail_svc)
     inspect_lock = threading.Lock()
+    scheduler = InspectionScheduler(cfg, store, mail_svc, inspect_lock=inspect_lock)
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
@@ -241,10 +266,34 @@ def create_app(
         token = authorization[7:].strip()
         return verify_token(token, cfg.auth_secret)
 
+    def require_authenticated(
+        authorization: str | None,
+        action: str,
+        op_id: str,
+        *,
+        record_audit: bool = False,
+    ) -> tuple[AuthUser | None, JSONResponse | None]:
+        user = resolve_user(authorization)
+        if user is None:
+            label = ACTION_CN.get(action, action)
+            logger.warning("未认证访问被拦截 action=%s op_id=%s", action, op_id)
+            if record_audit:
+                store.add_audit(
+                    op_id=op_id,
+                    actor="anonymous",
+                    role="anon",
+                    action=action,
+                    http_status=401,
+                    detail=f"未登录状态下尝试{label}，已拦截",
+                )
+            return None, _err_resp(401, f"请先登录系统后再{label}。", op_id)
+        return user, None
+
     def require_admin(authorization: str | None, action: str, op_id: str) -> tuple[AuthUser | None, JSONResponse | None]:
         user = resolve_user(authorization)
         label = ACTION_CN.get(action, action)
         if user is None:
+            logger.warning("未认证写操作被拦截 action=%s op_id=%s", action, op_id)
             store.add_audit(
                 op_id=op_id,
                 actor="anonymous",
@@ -255,6 +304,7 @@ def create_app(
             )
             return None, _err_resp(401, f"尚未登录系统，请先使用管理员账号登录后再{label}。", op_id)
         if user.role != "admin":
+            logger.warning("只读成员越权操作被拦截 actor=%s action=%s op_id=%s", user.username, action, op_id)
             store.add_audit(
                 op_id=op_id,
                 actor=user.username,
@@ -325,7 +375,12 @@ def create_app(
         vendor: str = Query(default=""),
         collector_type: str = Query(default=""),
         alert_only: bool = Query(default=False),
-    ) -> dict[str, Any]:
+        authorization: str | None = Header(default=None),
+    ) -> Response:
+        op_id = _make_op_id()
+        _, err = require_authenticated(authorization, "READ_TARGETS", op_id)
+        if err:
+            return err
         items = store.list_targets(
             q=q,
             target_type=type,
@@ -333,7 +388,7 @@ def create_app(
             collector_type=collector_type,
             alert_only=alert_only,
         )
-        return {"items": items}
+        return JSONResponse(content={"items": items}, headers={"X-Op-Id": op_id})
 
     @app.post("/api/targets", status_code=201)
     def create_target(payload: TargetPayload, authorization: str | None = Header(default=None)) -> Response:
@@ -481,7 +536,12 @@ def create_app(
         vendor: str = Query(default=""),
         collector_type: str = Query(default=""),
         alert_only: bool = Query(default=False),
+        authorization: str | None = Header(default=None),
     ) -> Response:
+        op_id = _make_op_id()
+        _, err = require_authenticated(authorization, "EXPORT_TARGETS", op_id, record_audit=True)
+        if err:
+            return err
         items = store.list_targets(
             q=q,
             target_type=type,
@@ -490,7 +550,7 @@ def create_app(
             alert_only=alert_only,
         )
         if format == "json":
-            return JSONResponse(content={"items": items})
+            return JSONResponse(content={"items": items}, headers={"X-Op-Id": op_id})
 
         cols = [
             "host",
@@ -517,7 +577,10 @@ def create_app(
         return Response(
             content=content.encode("utf-8"),
             media_type="text/csv; charset=utf-8",
-            headers={"Content-Disposition": 'attachment; filename="ops-inspect-export.csv"'},
+            headers={
+                "Content-Disposition": 'attachment; filename="ops-inspect-export.csv"',
+                "X-Op-Id": op_id,
+            },
         )
 
     @app.post("/api/inspect/run")
@@ -636,16 +699,23 @@ def create_app(
         return JSONResponse(content={"item": updated, "op_id": op_id}, headers={"X-Op-Id": op_id})
 
     @app.get("/api/schedule")
-    def get_schedule() -> dict[str, Any]:
+    def get_schedule(authorization: str | None = Header(default=None)) -> Response:
+        op_id = _make_op_id()
+        _, err = require_authenticated(authorization, "READ_SCHEDULE", op_id)
+        if err:
+            return err
         s = store.get_schedule()
         smtp_view = mail_svc.get_public_smtp_view()
-        return {
-            "enabled": s["enabled"],
-            "push_time": s["push_time"],
-            "recipients": s["recipients"],
-            "smtp_mode": smtp_view["mode"],
-            "smtp": smtp_view,
-        }
+        return JSONResponse(
+            content={
+                "enabled": s["enabled"],
+                "push_time": s["push_time"],
+                "recipients": s["recipients"],
+                "smtp_mode": smtp_view["mode"],
+                "smtp": smtp_view,
+            },
+            headers={"X-Op-Id": op_id},
+        )
 
     @app.put("/api/schedule")
     def update_schedule(payload: SchedulePayload, authorization: str | None = Header(default=None)) -> Response:
@@ -687,8 +757,12 @@ def create_app(
         )
 
     @app.get("/api/smtp")
-    def get_smtp_config() -> dict[str, Any]:
-        return mail_svc.get_public_smtp_view()
+    def get_smtp_config(authorization: str | None = Header(default=None)) -> Response:
+        op_id = _make_op_id()
+        _, err = require_authenticated(authorization, "READ_SMTP", op_id)
+        if err:
+            return err
+        return JSONResponse(content=mail_svc.get_public_smtp_view(), headers={"X-Op-Id": op_id})
 
     @app.put("/api/smtp")
     def update_smtp_config(payload: SmtpConfigPayload, authorization: str | None = Header(default=None)) -> Response:
@@ -799,9 +873,17 @@ def create_app(
         return JSONResponse(content={**view, "op_id": op_id}, headers={"X-Op-Id": op_id})
 
     @app.get("/api/reports/markdown")
-    def get_markdown_report() -> PlainTextResponse:
+    def get_markdown_report(authorization: str | None = Header(default=None)) -> Response:
+        op_id = _make_op_id()
+        _, err = require_authenticated(authorization, "READ_REPORT", op_id)
+        if err:
+            return err
         targets = store.list_targets()
-        return PlainTextResponse(content=build_markdown_report(targets), media_type="text/markdown; charset=utf-8")
+        return PlainTextResponse(
+            content=build_markdown_report(targets),
+            media_type="text/markdown; charset=utf-8",
+            headers={"X-Op-Id": op_id},
+        )
 
     @app.post("/api/reports/push")
     def push_report_now(authorization: str | None = Header(default=None)) -> Response:
@@ -864,12 +946,20 @@ def create_app(
         )
 
     @app.get("/api/outbox")
-    def list_outbox() -> dict[str, Any]:
-        return {"items": store.list_outbox()}
+    def list_outbox(authorization: str | None = Header(default=None)) -> Response:
+        op_id = _make_op_id()
+        _, err = require_authenticated(authorization, "READ_OUTBOX", op_id)
+        if err:
+            return err
+        return JSONResponse(content={"items": store.list_outbox()}, headers={"X-Op-Id": op_id})
 
     @app.get("/api/audits")
-    def list_audits() -> dict[str, Any]:
-        return {"items": store.list_audits()}
+    def list_audits(authorization: str | None = Header(default=None)) -> Response:
+        op_id = _make_op_id()
+        _, err = require_authenticated(authorization, "READ_AUDITS", op_id, record_audit=True)
+        if err:
+            return err
+        return JSONResponse(content={"items": store.list_audits()}, headers={"X-Op-Id": op_id})
 
     return app
 

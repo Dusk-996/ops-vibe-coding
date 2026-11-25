@@ -1,9 +1,35 @@
-[PASS] GET /health -> 200 {"status":"ok","smtp_mode":"smtp","smtp_source":"database","env":"development"}
-[PASS] POST /api/auth/login (admin) -> 200 role=admin
-[PASS] POST /api/auth/login (duskk) -> 200 role=viewer
-[PASS] POST /api/inspect/run (unauthenticated) -> 401 Unauthorized
-[PASS] POST /api/inspect/run (duskk viewer) -> 403 Forbidden
-[PASS] POST /api/inspect/1 (local real) -> 200 mem=17.2/31.9GB cpu=4.7% cores=16 status=OK
-[PASS] GET /api/reports/markdown -> 200 overview_mode=OK length=697
-[PASS] GET /api/smtp -> 200 mode=smtp saved_profiles=1 no_secret_leak=OK
-[PASS] GET http://127.0.0.1:5173/ -> 200 frontend_ready=OK
+[2026-11-25 23:58:29] === P5 真 Linux 全面端到端测试开始 | OS=Linux 6.18.33.2-microsoft-standard-WSL2 (x86_64) | Python=3.14.4 | UID=1000 ===
+[2026-11-25 23:58:30] [PASS] (D1-Linux真实采集) Linux /proc/meminfo 与 0.5s /proc/stat 采集核验 :: 采集值 mem=7.0/7.8GB cores=4 cpu=1.5% status=OK (宿主机基准 mem=7.0/7.8GB cores=4)
+[2026-11-25 23:58:30] [PASS] (D2-生产FailFast) APP_ENV=production 弱密码/弱密钥必须拒启 :: exit=1, err=RuntimeError: 生产安全校验失败（Fail-Fast 拒启）：AUTH_SECRET 缺失、不足 12 位或仍为占位符；ADMIN_PASSWORD 缺失、不足 12 位或仍为占位符
+[2026-11-25 23:58:30] [PASS] (D2-生产FailFast) APP_ENV=production CORS=* 必须拒启 :: exit=1, err=RuntimeError: 生产安全校验失败（Fail-Fast 拒启）：CORS_ORIGINS 禁止使用通配符 *
+[2026-11-25 23:58:30] [PASS] (D2-生产FailFast) APP_ENV=production 弱 CREDENTIAL_MASTER_KEY 必须拒启 :: exit=1, err=RuntimeError: 生产安全校验失败（Fail-Fast 拒启）：CREDENTIAL_MASTER_KEY 不足 12 位或仍为占位符
+[2026-11-25 23:58:30] [PASS] (D2-生产FailFast) 强密钥生产进程启动与 /health 探活 :: status=200 body={'status': 'ok', 'smtp_mode': 'mock', 'smtp_source': 'none', 'env': 'production'}
+[2026-11-25 23:58:30] [PASS] (D3-认证与RBAC) 错误密码登录返回 401 :: HTTP 401
+[2026-11-25 23:58:30] [PASS] (D3-认证与RBAC) 管理员 admin 强密码登录 :: HTTP 200
+[2026-11-25 23:58:30] [PASS] (D3-认证与RBAC) 只读账号 duskk 登录 :: HTTP 200
+[2026-11-25 23:58:30] [PASS] (D3-认证与RBAC) 伪造 Token 拦截 401 :: HTTP 401
+[2026-11-25 23:58:30] [PASS] (D3-认证与RBAC) 未登录访问全部 7 个读接口一律拦截 401 :: codes=[401, 401, 401, 401, 401, 401, 401]
+[2026-11-25 23:58:30] [PASS] (D3-认证与RBAC) 未登录 5 类写接口全部 401 :: codes=[401, 401, 401, 401, 401]
+[2026-11-25 23:58:30] [PASS] (D3-认证与RBAC) duskk 只读登录后访问全部 7 个读接口一律 200 :: codes=[200, 200, 200, 200, 200, 200, 200]
+[2026-11-25 23:58:30] [PASS] (D3-认证与RBAC) duskk 越权调用 5 类写接口全部 403 :: codes=[403, 403, 403, 403, 403]
+[2026-11-25 23:58:30] [PASS] (D4-资产CRUD与筛选) 新增静态目标（初始状态恒为 PENDING + 携带 X-Op-Id） :: HTTP 201, id=6, status=PENDING
+[2026-11-25 23:58:30] [PASS] (D4-资产CRUD与筛选) 重复主机名登记返回 409 Conflict :: HTTP 409
+[2026-11-25 23:58:30] [PASS] (D4-资产CRUD与筛选) 编辑静态目标 IP 与端口 :: HTTP 200
+[2026-11-25 23:58:30] [PASS] (D4-资产CRUD与筛选) 多维度组合筛选准确 :: matched=1
+[2026-11-25 23:58:30] [PASS] (D4-资产CRUD与筛选) 删除目标 200 及二次删除 404 :: del1=200, del2=404
+[2026-11-25 23:58:30] [PASS] (D5-导入导出与防注入) CSV 预检精准识别有效行、非法端口与文件内重名 :: valid=2, errors=['第 4 行 SSH 端口超出范围 (1-65535)', '第 5 行文件内主机名 p5-import-ok 重复']
+[2026-11-25 23:58:31] [PASS] (D5-导入导出与防注入) 批量导入 skip 跳过与 overwrite 覆盖策略 :: first={'added': 2, 'updated': 0, 'skipped': 0, 'op_id': 'op-6dc827c9'}, skip={'added': 0, 'updated': 0, 'skipped': 2, 'op_id': 'op-8244c684'}, overwrite={'added': 0, 'updated': 2, 'skipped': 0, 'op_id': 'op-a91ae779'}
+[2026-11-25 23:58:31] [PASS] (D5-导入导出与防注入) 超过 2MB 导入载荷拦截返回 413 :: HTTP 413
+[2026-11-25 23:58:31] [PASS] (D5-导入导出与防注入) CSV 导出含 UTF-8 BOM 并转义 =CMD_INJECT 防公式注入 :: bom=True, escaped=True
+[2026-11-25 23:58:31] [PASS] (D6-并发巡检与隔离) 生产严格模式缺少 known_hosts 拒连（不静默降级 AutoAddPolicy） :: HTTP 502, detail=p5-ssh-strict-nokh 采集失败：缺少 SSH known_hosts 主机指纹白名单文件（严格模式下已拒连）
+[2026-11-25 23:58:31] [PASS] (D6-并发巡检与隔离) 5 并发全量巡检成功隔离 TIMEOUT 与 SSH 路径穿越 UNREACHABLE :: total=8 ok=6 fail=2 | local=7.0/7.8GB(0.0%) | edge=TIMEOUT | ssh_traversal=UNREACHABLE(未找到 SSH 凭据别名 [../../etc/passwd] 对应的只读私钥文件)
+[2026-11-25 23:58:31] [PASS] (D6-并发巡检与隔离) 单台超时节点直调检测返回 504（不重试） :: HTTP 504
+[2026-11-25 23:58:31] [PASS] (D7-发件箱加密与报告) 定时参数非法拦截 400 与合法保存 200 :: bad=400, ok=200
+[2026-11-25 23:58:31] [PASS] (D7-发件箱加密与报告) 多发件箱 SQLite 全 Fernet 密文存储且 API 零明文/密文回显 :: profiles=2, enc_prefixes=['v1:gAA', 'v1:gAA'], api_leaked=False
+[2026-11-25 23:58:31] [PASS] (D7-发件箱加密与报告) 多发件箱免重输一键热切换 + 切回模拟箱安全推送 :: switch_p1=200, switch_mock=200, push=200
+[2026-11-25 23:58:31] [PASS] (D7-发件箱加密与报告) 总—分巡检报告详展异常主机且省略正常主机明细 :: HTTP 200, has_abnormal=True, normal_omitted=True, len=815
+[2026-11-25 23:58:31] [PASS] (D7-发件箱加密与报告) 全量审计日志完整落库（覆盖 200/201/401/403/409/504） :: total_audits=35, captured_statuses=[200, 201, 401, 403, 409, 502, 504]
+[2026-11-25 23:58:31] [PASS] (D7-发件箱加密与报告) 后端标准结构化日志输出（含 ops_inspect 调度与安全告警） :: log_bytes=6441, has_scheduler_main_collector=True
+[2026-11-25 23:58:31] --- 触发生产进程 SIGTERM 优雅重启，验证 SQLite 持久化与加密凭据可解密 ---
+[2026-11-25 23:58:32] [PASS] (D8-进程重启持久化) SIGTERM 重启后资产、定时规则、收件箱与加密发件箱 100% 持久留存且可解密 :: targets=8, push_time=08:30, smtp_profiles=2, outbox=1, decrypt_after_restart=True
+[2026-11-25 23:58:32] === P5 真 Linux 全面端到端测试圆满结束：32/32 PASSED (0 FAIL) ===

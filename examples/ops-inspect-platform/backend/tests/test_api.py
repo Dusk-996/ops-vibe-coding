@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import io
+import logging
+import smtplib
 import socket
 from datetime import datetime
 from pathlib import Path
@@ -182,18 +184,46 @@ def test_import_preview_commit_and_csv_formula_escape(tmp_path: Path):
     assert commit2.json()["skipped"] == 2
 
     # 新导入目标初始状态为 PENDING
-    items = client.get("/api/targets").json()["items"]
+    items = client.get("/api/targets", headers=admin_headers).json()["items"]
     assert all(i["probe_status"] == "PENDING" for i in items)
 
     # 导出 CSV 含 UTF-8 BOM 且对 = 开头字段防公式注入转义
-    exp = client.get("/api/targets/export?format=csv")
+    exp = client.get("/api/targets/export?format=csv", headers=admin_headers)
     assert exp.status_code == 200
     raw_bytes = exp.content
     assert raw_bytes.startswith(b"\xef\xbb\xbf")
     assert "'=EVIL_HOST" in raw_bytes.decode("utf-8-sig")
 
 
-# ==================== 3. mutating 强制 4 类负面安全用例 ====================
+# ==================== 3. mutating 强制 4 类负面安全用例 + 读接口鉴权 ====================
+
+
+def test_security_401_anonymous_reads_blocked(tmp_path: Path):
+    """401 未认证读接口测试：除 /health 外，全部 7 个只读接口匿名访问必须返回 401 且带 X-Op-Id；viewer 可正常读取。"""
+    settings = _build_test_settings(tmp_path)
+    app = create_app(settings=settings, seed_defaults=True)
+    client = TestClient(app)
+
+    assert client.get("/health").status_code == 200
+
+    read_paths = [
+        "/api/targets",
+        "/api/targets/export?format=csv",
+        "/api/schedule",
+        "/api/smtp",
+        "/api/reports/markdown",
+        "/api/outbox",
+        "/api/audits",
+    ]
+    for path in read_paths:
+        resp = client.get(path)
+        assert resp.status_code == 401, f"{path} 应拦截匿名访问"
+        assert resp.headers.get("X-Op-Id")
+
+    viewer_headers = _login_headers(client, "viewer", settings.viewer_cred)
+    for path in read_paths:
+        resp = client.get(path, headers=viewer_headers)
+        assert resp.status_code == 200, f"viewer 应可读取 {path}"
 
 
 def test_security_401_unauthorized_write_blocked(tmp_path: Path):
@@ -201,6 +231,7 @@ def test_security_401_unauthorized_write_blocked(tmp_path: Path):
     settings = _build_test_settings(tmp_path)
     app = create_app(settings=settings, seed_defaults=True)
     client = TestClient(app)
+    admin_headers = _login_headers(client, "admin", settings.admin_cred)
 
     assert client.post("/api/inspect/run").status_code == 401
     assert client.post("/api/reports/push").status_code == 401
@@ -212,7 +243,7 @@ def test_security_401_unauthorized_write_blocked(tmp_path: Path):
         == 401
     )
 
-    audits = client.get("/api/audits").json()["items"]
+    audits = client.get("/api/audits", headers=admin_headers).json()["items"]
     assert any(a["http_status"] == 401 and a["action"] == "INSPECT_ALL" for a in audits)
 
 
@@ -243,7 +274,7 @@ def test_security_403_viewer_forbidden_write_blocked(tmp_path: Path):
         == 403
     )
 
-    audits = client.get("/api/audits").json()["items"]
+    audits = client.get("/api/audits", headers=viewer_headers).json()["items"]
     assert any(a["http_status"] == 403 and a["actor"] == "viewer" for a in audits)
 
 
@@ -262,7 +293,7 @@ def test_security_409_concurrent_push_conflict(tmp_path: Path):
     finally:
         mailer._push_lock.release()
 
-    audits = client.get("/api/audits").json()["items"]
+    audits = client.get("/api/audits", headers=admin_headers).json()["items"]
     assert any(a["http_status"] == 409 and a["action"] == "PUSH_REPORT_NOW" for a in audits)
 
 
@@ -286,7 +317,7 @@ def test_security_504_smtp_timeout_no_retry(tmp_path: Path):
     assert res.status_code == 504
     assert call_count == 1  # 关键安全红线：超时不重试
 
-    audits = client.get("/api/audits").json()["items"]
+    audits = client.get("/api/audits", headers=admin_headers).json()["items"]
     assert any(a["http_status"] == 504 and a["action"] == "PUSH_REPORT_NOW" for a in audits)
 
 
@@ -483,6 +514,146 @@ def test_report_summary_shows_only_abnormal_details():
     assert "ok-node-01" not in md  # 正常主机不详展
     assert "bad-node-02" in html_body
     assert "ok-node-01" not in html_body
+
+
+# ==================== 5. Ops Readiness 加固回归用例 ====================
+
+
+def test_production_fail_fast_rejects_weak_master_key(monkeypatch, tmp_path: Path):
+    """MINOR-01：独立配置 CREDENTIAL_MASTER_KEY 若弱于安全基线，生产模式必须 Fail-Fast 拒启。"""
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("AUTH_SECRET", "Strong_Auth_Secret_2026_9999")
+    monkeypatch.setenv("CREDENTIAL_MASTER_KEY", "changeme")
+    monkeypatch.setenv("ADMIN_PASSWORD", "Strong_Admin_Pass_2026!")
+    monkeypatch.setenv("VIEWER_PASSWORD", "Strong_Viewer_Pass_2026!")
+    monkeypatch.setenv("DB_PATH", str(tmp_path / "prod_mk.db"))
+
+    with pytest.raises(RuntimeError, match="CREDENTIAL_MASTER_KEY"):
+        load_settings(env_file=tmp_path / "nonexistent.env")
+
+
+def test_ssh_strict_host_key_and_output_limit(tmp_path: Path):
+    """MAJOR-02：严格模式缺少 known_hosts 必须拒连，不静默降级 AutoAddPolicy；超过 64KB 输出必须阻断。"""
+    keys_dir = tmp_path / "ssh_keys"
+    keys_dir.mkdir(parents=True, exist_ok=True)
+    (keys_dir / "ro_key").write_text("DUMMY_KEY_CONTENT", encoding="utf-8")
+
+    settings = _build_test_settings(tmp_path, ssh_keys_dir=keys_dir, ssh_strict_host_key=True)
+    target = {
+        "id": 99,
+        "host": "prod-ssh-strict",
+        "address": "10.10.9.9",
+        "ssh_port": 22,
+        "ssh_user": "ops-ro",
+        "ssh_credential_ref": "ro_key",
+    }
+    res_no_kh = collect_ssh(target, settings)
+    assert res_no_kh.probe_status == "UNREACHABLE"
+    assert "known_hosts" in res_no_kh.probe_error
+
+    # 验证超过 64KB 输出被安全截断拒收
+    class OversizedSshClient:
+        def connect(self, **_kwargs):
+            return None
+
+        def exec_command(self, _cmd: str, timeout: float = 8.0):
+            return None, io.BytesIO(b"A" * 70000), io.BytesIO(b"")
+
+        def close(self):
+            return None
+
+    res_big = collect_ssh(target, settings, ssh_client_factory=OversizedSshClient)
+    assert res_big.probe_status == "UNREACHABLE"
+    assert "ValueError" in res_big.probe_error
+
+
+def test_scheduler_loop_error_logged_and_audited(tmp_path: Path, caplog):
+    """MAJOR-03：后台调度轮询抛出非预期异常时，不得静默吞错，必须记标准日志与 500 审计。"""
+    settings = _build_test_settings(tmp_path)
+    app = create_app(settings=settings, seed_defaults=True)
+    sched = app.state.scheduler
+    store: Storage = app.state.storage
+
+    def broken_tick():
+        raise RuntimeError("simulated sqlite disk full")
+
+    sched.tick_once = broken_tick  # type: ignore[method-assign]
+    with caplog.at_level(logging.ERROR, logger="ops_inspect.scheduler"):
+        sched._run_loop_iteration()
+
+    assert any("后台定时调度轮询发生未预期异常" in rec.getMessage() for rec in caplog.records)
+    audits = store.list_audits()
+    assert any(a["action"] == "SCHEDULER_LOOP_ERROR" and a["http_status"] == 500 for a in audits)
+
+
+def test_scheduler_shares_inspect_lock_with_manual_inspect(tmp_path: Path):
+    """MINOR-02：手动全量巡检持有 inspect_lock 时，定时巡检必须跳过并记录 409 审计，绝不并发撞车。"""
+    settings = _build_test_settings(tmp_path)
+    app = create_app(settings=settings, seed_defaults=True)
+    sched = app.state.scheduler
+    store: Storage = app.state.storage
+    lock = app.state.inspect_lock
+
+    fixed_time = datetime(2026, 11, 25, 9, 0, 15)
+    assert lock.acquire(blocking=False) is True
+    try:
+        assert sched.tick_once(now_fn=lambda: fixed_time) is False
+    finally:
+        lock.release()
+
+    audits = store.list_audits()
+    assert any(a["action"] == "SCHEDULED_INSPECT_AND_PUSH" and a["http_status"] == 409 for a in audits)
+    assert len(store.list_outbox()) == 0
+
+
+def test_smtp_error_sanitized_to_client(tmp_path: Path):
+    """MINOR-03：SMTP 投递失败时向前端返回脱敏运维人话，不得透传底层敏感异常细节。"""
+
+    def auth_fail_sender(_settings, _recipients, _subject, _body_md, _body_html):
+        raise smtplib.SMTPAuthenticationError(535, b"INTERNAL_RELAY_SECRET_TOKEN_LEAK")
+
+    settings = _build_test_settings(tmp_path, smtp_host="smtp.example.local", smtp_port=465, smtp_use_ssl=True)
+    storage = Storage(settings.db_path, seed_defaults=True)
+    mailer = MailerService(settings, storage, smtp_sender=auth_fail_sender)
+    app = create_app(settings=settings, storage=storage, mailer=mailer)
+    client = TestClient(app)
+    admin_headers = _login_headers(client, "admin", settings.admin_cred)
+
+    res = client.post("/api/reports/push", headers=admin_headers)
+    assert res.status_code == 502
+    assert "INTERNAL_RELAY_SECRET_TOKEN_LEAK" not in res.text
+    assert "认证失败" in res.json()["detail"]
+
+
+def test_storage_retention_pruning(tmp_path: Path):
+    """MINOR-04：发件历史与审计表写入时自动按上限裁剪，防止 SQLite 无限膨胀。"""
+    store = Storage(tmp_path / "prune.db", seed_defaults=False, max_outbox_rows=3, max_audit_rows=5)
+    for i in range(6):
+        store.add_outbox(
+            op_id=f"op-m{i}",
+            delivery_mode="mock",
+            status_code=200,
+            recipients="ops@corp.local",
+            subject=f"subj-{i}",
+            body_md="body",
+        )
+    for i in range(9):
+        store.add_audit(
+            op_id=f"op-a{i}",
+            actor="admin",
+            role="admin",
+            action="TEST_PRUNE",
+            http_status=200,
+            detail=f"detail-{i}",
+        )
+
+    outbox_rows = store.list_outbox(limit=50)
+    audit_rows = store.list_audits(limit=50)
+    assert len(outbox_rows) == 3
+    assert [r["subject"] for r in outbox_rows] == ["subj-5", "subj-4", "subj-3"]
+    assert len(audit_rows) == 5
+    assert [r["detail"] for r in audit_rows] == ["detail-8", "detail-7", "detail-6", "detail-5", "detail-4"]
+
 
 
 

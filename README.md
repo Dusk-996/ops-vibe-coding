@@ -1,80 +1,55 @@
-# Ops Vibe Coding
+# Ops Vibe Coding v3.3
 
-面向熟悉运维、想借助 AI 开发工具的工程师。从一次值班遇到的问题开始，经过原型、架构、实现与验收，把一个想法做成可验证的软件。
+> 面向**不会写代码的运维工程师**、专为 **Codex**（兼顾 Antigravity）设计的**生产级 Web 运维平台 Vibe Coding 方法论与确定性门禁系统**。
 
-## 从这里开始
+核心理念：**阶段内让机器与机器靠固定路径和硬门禁全自动闭环，阶段间强制停手由人类用大白话验收拍板；先起前端验收通过，再写后端与联调。**
 
-| 你要做什么 | 从哪里起步 |
-|---|---|
-| **第一次做本地 Demo**，用假数据验证一个流程 | 打开 [Quick Start 的 S00](docs/01-quick-start.md#s00)，选一个有价值的场景，再按 [轻量路线](workflows/lightweight.md) 完成练习。 |
-| **团队长期维护，或涉及真实基础设施变更** | 走 [完整路线 S00–S14](workflows/full.md#s00)。例如，真的修改 Deployment 涉及权限、审计与未知结果处理，参见 [Restart 教学案例](examples/kubernetes-deployment-restart/README.md)。 |
+---
 
-先说清楚谁遇到了什么问题、现在怎么做、怎样算解决。S00 可以停在风险清单；决定做原型时，由人选定一个目标。没有前端经验，可以从 [单页原型库](https://github.com/luozijian1990/Beautiful-Ops-Pages) 或 [平台原型库](https://github.com/luozijian1990/Beautiful-Ops-Platform) 选已有页面，用 Mock 数据替换成自己的场景。
+## 一、全流程 6 阶段总览（P1 → P5）
 
-在每个实际交付的节点，打开产物并按[阶段评分细则](references/stage-rubrics.md)复查。五项合计 10 分，8 分合格。报告给出扣分位置和复验条件，由人决定是否修订或继续；原型批准、测试范围和风险接受分别记录。[看一份从 7 分到 10 分的复评](docs/reviews/calibration/skill-invocations.md)
-
-## 完整流程
-
-![Ops Vibe Coding 完整工作流，覆盖 S00–S14、人工门禁和反馈路径](docs/diagrams/ops-vibe-coding-workflow.svg)
-
-[查看 SVG 大图](docs/diagrams/ops-vibe-coding-workflow.svg) · [编辑 draw.io 源文件](docs/diagrams/ops-vibe-coding-workflow.drawio) · [S00–S14 完整阶段说明](workflows/full.md)
-
-图中蓝色实线表示主路径，黄色菱形标记判断或人工批准，红色虚线表示退回与修复。阶段编号与 Full Track 对应，具体放行条件及回退规则以阶段说明为准。
-
-[Archify 交互版流程图](docs/ops-vibe-coding-workflow.html) 提供主题切换、缩放、搜索和阶段导览。请下载 HTML 后用浏览器打开，图稿与本地 Restart 验证见[15 阶段覆盖清单](docs/reviews/2026-11-22-stage-artifacts.md)。
-
-Parity、Review、Ops Readiness 或 E2E 发现问题后，都要回到对应阶段修正并重新提供证据。人工验收完成后，将验收记录交给实际项目的生产发布流程。
-
-## 10 分钟理解每个阶段
-
-| 阶段 | 回答的问题 | 关键产物 | 人工门禁 |
+| 阶段 | 核心目标 | 串联 Skill（Codex `$<name>`） | 强制人工确认点 |
 |---|---|---|---|
-| 意图与 Prototype | 先验证哪个场景，用户如何使用？ | S00 简报、HTML Prototype、批准记录 | 人先选场景，再实际体验并确认原型 |
-| React + Mock | 产品契约是否可执行？ | React App、Mock API/Data | Parity 报告通过 |
-| Architecture | 系统由什么组成？ | Draft、Grill 决策、Final | 确认运行与风险约束 |
-| Spec、Tickets 与 TDD | 一个可独立验收的任务怎样实现？ | Spec、Ticket、代码、测试结果 | 确认范围、验收条件和测试边界 |
-| 代码与运维审查 | 实现满足规格吗，失败后能恢复吗？ | Code Review、Ops Readiness 报告 | 关闭阻断问题，由有权人员处理剩余风险 |
-| E2E 与人工验收 | 真实流程是否解决最初的问题？ | 测试计划、浏览器证据、验收决定 | 批准测试范围，按实际证据接受或退回 |
+| **P1 意图、风格与原型** | 定边界（含 Non-Goals）→ 3 套风格对比选定 → 可交互高保真原型 | `devops-brainstorming` → `ui-ux-pro-max` → `frontend-design` | 打开原型确认界面与交互 → `approve p1` |
+| **P2 技术栈与核心机制** | 逐项拍板前后端语言框架 + **核心运维采集/执行机制** + 存储/部署 | `stack-selector` → `grilling` → `stack-selector` | 确认技术栈与核心机制 → `approve p2` |
+| **P3 规格、骨架与用例** | 输出 OpenAPI、规格、P4a/P4b 任务书、空工程骨架（含容器红线预扫） | `to-spec` → `project-init` → `devops-writing-plans` | 确认目录骨架、逻辑流与用例 → `approve p3` |
+| **P4a 前端实机验收** | 保真实现前端（禁原生 `<select>`、左表右抽屉、无后端双态预览）并启动 | `html-to-mui-react` → `prototype-parity-review` | 浏览器实机点验前端 → `approve p4a` |
+| **P4b 后端采集与互检** | 实现真实核心引擎 + 安全测试（401/403/409/504 不重试）+ 双审查 | `test-driven-development` + `verification-before-completion` → `code-review` + `ops-readiness-review` | 验收联调效果与实测证据 → `approve p4b` |
+| **P5 真环境联调放行** | 真实前后端全链路探活、收集证据、生成 `05-release-gate.json` | `playwright-cli` / `playwright-e2e-debug-report`（或实机联调） | 最终上线放行拍板 → `approve p5` |
 
-前端只能暴露能力候选，不能直接决定 Redis、MQ、Worker、WebSocket 或微服务：
+---
 
-> UI 告诉我们系统需要做什么；Grill 告诉我们系统必须在什么约束下运行；两者共同决定架构。
+## 二、5 分钟快速上手（新运维 Web 项目）
 
-## 按需查阅
+### 1. 初始化项目（一键生成受保护的 `AGENTS.md` 与 `.vibe/state.json`）
+```bash
+# 含写操作/巡检触发/邮件发送的运维平台选 --mode mutating；纯只读看板选 --mode readonly
+python ../ops-vibe-coding/scripts/vibe_gate.py init \
+  --project ./my-ops-platform \
+  --name my-ops-platform \
+  --mode mutating
+```
 
-- 换会话或接手 Ticket，先读[交接记录](harness/examples/handoff.example.md)；多会话协作见 [Harness](harness/README.md)。
-- 在当前阶段查[产物索引](references/artifacts.md)、[技能与固定版本](references/skills.md)或[流程问题定位](docs/09-troubleshooting.md)。
-- 按主题深入阅读：[原型](docs/02-prototype-first.md)、[架构与 Spec](docs/03-architecture-and-sdd.md)、[上下文](docs/04-context-engineering.md)、[TDD](docs/05-tdd-and-feedback-loop.md)、[运维就绪](docs/06-ops-readiness.md)、[E2E 与人工验收](docs/07-e2e-and-human-acceptance.md)。术语见 [FAQ](docs/08-faq.md)。
+### 2. 在 Codex 中按阶段驱动（每步机器校验 + 人工拍板）
+```bash
+# 阶段完成由 Agent 自动运行硬校验（退出码 0 才算通过；连续失败 3 轮自动熔断交人类）
+python ../ops-vibe-coding/scripts/vibe_gate.py check p1 --project .
 
-## 核心原则
+# 人类验收满意后显式放行（严禁 Agent 代签）
+python ../ops-vibe-coding/scripts/vibe_gate.py approve p1 --project . --by ops-user --note "原型确认通过"
 
-### 采用范围与责任
+# 随时查看全阶段状态与命令配置
+python ../ops-vibe-coding/scripts/vibe_gate.py status --project .
+```
 
-本仓库提供工作流和教学产物；规范 M、模板及依赖接口 A、具体产品 P 的验证分开。流程或练习通过不自动证明某个产品可上线，也不保证新人无错误。
+---
 
-新人负责按任务生成/核对产物、记录证据并在缺输入、权限或结果未知时停手；维护者确认架构、Spec 和测试范围，资深人员复核技术与运行风险，有权发布人另行批准上线。每个采用项目须把这些角色绑定到实际人员，不能由 Agent 代签。
+## 三、方法论核心文档与标杆案例
 
-本次[阶段验收记录](docs/reviews/2026-11-22-stage-artifacts.md)列出 Restart 本地证据和待确认事项。此前[只读发布巡检](docs/reviews/2026-11-22-s00-workflow.md)单独保留。旧版本的采用与图稿检查见 [2026-11-15 记录](docs/reviews/2026-11-15-reuse-validation.md)。
-
-### 工作原则
-
-- **Prototype before expensive code**：尽量在低成本原型阶段发现产品问题。
-- **Human approves intent, AI executes detail**：AI 执行细节，人决定需求、架构、风险和验收。
-- **UI reveals capabilities, grilling reveals constraints**：不从 UI 直接脑补完整架构。
-- **Evidence before complexity**：没有具体证据，不增加基础设施复杂度。
-- **One ticket, one context**：一个 Ticket 使用一个新会话，降低上下文污染。
-- **Specs are executable contracts**：Spec 必须能够指导实现与测试。
-- **Tests are evidence**：不能用“应该可用”代替可复现验证。
-- **Operations are part of software design**：权限、审计、Secret、恢复、部署和可观测性属于设计本身。
-- **Human acceptance closes the loop**：最终由人确认软件是否解决最初的问题。
-
-## 项目生态与仓库边界
-
-| 项目 | 职责 |
-|---|---|
-| `ops-vibe-coding` | 维护方法论、工作流、教程、引用和示例，定义 Operations-first Golden Path |
-| [Beautiful Ops Pages](https://github.com/luozijian1990/Beautiful-Ops-Pages) | 提供可直接体验和改写的单页功能原型 |
-| [Beautiful Ops Platform](https://github.com/luozijian1990/Beautiful-Ops-Platform) | 提供可直接体验和改写的完整运维平台原型 |
-| [skills-manager-backup](https://github.com/Dusk-996/skills-manager-backup) | 提供工作流引用的技能版本，具体入口及依赖见 [Skill Map](references/skills.md) |
-
-本地可运行的 [Deployment Restart 案例](examples/kubernetes-deployment-restart/README.md) 随本仓库维护。工作流通过固定版本引用上游技能。
+- **执行流程**：[workflow/pipeline.md](workflow/pipeline.md) — P1–P5 固定产物路径、P2 反向校准 P1 闭环与 P4a/P4b 分段规范
+- **人工门禁与熔断**：[workflow/human-gates.md](workflow/human-gates.md) — 阶段末三段大白话汇报模板、3 轮熔断与严禁代签规则
+- **运维与安全红线**：[workflow/risk-boundaries.md](workflow/risk-boundaries.md) — `readonly` vs `mutating`、401/403/409/504、生产 Fail-Fast、动态凭据加密热配与 SMTP/SSH 实践
+- **生产前端 UI 基线**：[workflow/frontend-ui-baseline.md](workflow/frontend-ui-baseline.md) — 禁原生 `<select>`、去源码预览、左表右抽屉、10s 悬浮通知与运维人话文案
+- **配套 Skill 路由与锁文件**：[references/skills.md](references/skills.md)、[references/skill-lock.json](references/skill-lock.json)
+- **端到端标杆案例**：[examples/ops-inspect-platform/](examples/ops-inspect-platform/) — **智能服务器巡检与定时邮件推送平台**（React 18 + Vite + FastAPI + SQLite + 真实 `local`/`ssh`/`mock` 采集 + Fernet 加密多发件箱 + QQ/标准 SMTP 实测通过）
+- **K8s 生产护栏模板**：[templates/k8s-guardrails/deployment.yaml](templates/k8s-guardrails/deployment.yaml)

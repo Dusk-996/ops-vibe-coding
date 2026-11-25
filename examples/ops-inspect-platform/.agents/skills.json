@@ -1,0 +1,31 @@
+{
+  "entries": [
+    {
+      "path": "../skills-manager-backup",
+      "include_only": [
+        "devops-brainstorming",
+        "ui-ux-pro-max",
+        "frontend-design",
+        "html-to-mui-react",
+        "prototype-parity-review",
+        "stack-selector",
+        "grilling",
+        "to-spec",
+        "project-init",
+        "devops-writing-plans",
+        "code-review",
+        "devops-requesting-code-review",
+        "ops-readiness-review",
+        "playwright-e2e-debug-report",
+        "playwright-cli"
+      ]
+    },
+    {
+      "path": "../skills-manager-backup/external-skills/superpowers/skills",
+      "include_only": [
+        "test-driven-development",
+        "verification-before-completion"
+      ]
+    }
+  ]
+}

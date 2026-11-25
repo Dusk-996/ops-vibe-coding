@@ -1,5 +1,12 @@
 .DS_Store
 .scratch/
-
-# 本地交接来源，不纳入方法论仓库
 handoff.md
+__pycache__/
+*.pyc
+.pytest_cache/
+node_modules/
+dist/
+.env
+*.db
+*.db-wal
+*.db-shm

@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>智能服务器巡检系统 · P1 原型 Rev 4（静态 IP 登记导入 + 主动巡检检测）</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --canvas: #f8fafc;
+    --surface: #ffffff;
+    --surface-subtle: #f1f5f9;
+    --ink-900: #0f172a;
+    --ink-700: #334155;
+    --ink-500: #64748b;
+    --ink-400: #94a3b8;
+    --line: #e2e8f0;
+    --line-strong: #cbd5e1;
+    --accent: #0f172a;
+    --accent-hover: #1e293b;
+    --blue: #2563eb;
+    --blue-bg: #eff6ff;
+    --blue-line: #bfdbfe;
+    --ok: #047857;
+    --ok-bg: #ecfdf5;
+    --ok-line: #a7f3d0;
+    --warn: #b45309;
+    --warn-bg: #fffbeb;
+    --warn-line: #fde68a;
+    --crit: #b91c1c;
+    --crit-bg: #fef2f2;
+    --crit-line: #fecaca;
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+    --shadow-md: 0 12px 28px rgba(15, 23, 42, 0.14);
+    --radius: 6px;
+    --font-sans: "PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, -apple-system, sans-serif;
+    --font-mono: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--canvas);
+    color: var(--ink-900);
+    font-size: 15px;
+    line-height: 1.55;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  button, input, select { font-family: inherit; font-size: 14px; color: var(--ink-900); }
+  button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+  /* 顶部导航 */
+  .topbar { position: sticky; top: 0; z-index: 40; background: var(--surface); border-bottom: 1px solid var(--line); box-shadow: var(--shadow-sm); }
+  .topbar-inner { max-width: 1480px; margin: 0 auto; padding: 0 24px; min-height: 64px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
+  .topbar-left { display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink-900); }
+  .brand-mark { width: 34px; height: 34px; background: var(--ink-900); color: #fff; border-radius: var(--radius); display: grid; place-items: center; }
+  .brand-title { font-size: 17px; font-weight: 700; }
+
+  .nav-links { display: flex; align-items: center; gap: 6px; }
+  .nav-link { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: var(--radius); font-size: 15px; font-weight: 600; color: var(--ink-500); border: none; background: transparent; cursor: pointer; transition: background 140ms, color 140ms; }
+  .nav-link:hover { background: var(--surface-subtle); color: var(--ink-900); }
+  .nav-link.active { background: var(--ink-900); color: #ffffff; }
+  .nav-pill { font-size: 12px; font-family: var(--font-mono); padding: 1px 7px; border-radius: 999px; background: rgba(148, 163, 184, 0.22); }
+
+  .role-control { display: inline-flex; align-items: center; gap: 8px; background: var(--surface-subtle); padding: 6px 12px; border-radius: var(--radius); font-size: 13px; color: var(--ink-700); }
+  .role-control label { font-weight: 600; }
+  .role-control select { border: 1px solid var(--line-strong); background: var(--surface); padding: 4px 8px; border-radius: 4px; font-size: 13px; }
+
+  .toast-bar { display: none; max-width: 1480px; width: calc(100% - 48px); margin: 16px auto 0; padding: 12px 16px; border-radius: var(--radius); border: 1px solid transparent; font-size: 14px; font-weight: 500; align-items: center; justify-content: space-between; gap: 12px; }
+  .toast-bar.show { display: flex; }
+  .toast-bar.ok { background: var(--ok-bg); color: var(--ok); border-color: var(--ok-line); }
+  .toast-bar.warn { background: var(--warn-bg); color: var(--warn); border-color: var(--warn-line); }
+  .toast-bar.err { background: var(--crit-bg); color: var(--crit); border-color: var(--crit-line); }
+
+  .page { max-width: 1480px; width: 100%; margin: 0 auto; padding: 24px 24px 40px; display: none; gap: 20px; }
+  .page.active { display: grid; }
+  .page-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; }
+  .page-head h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+  .page-head p { margin-top: 4px; font-size: 14px; color: var(--ink-500); }
+  .head-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 9px 16px; border-radius: var(--radius); font-size: 14px; font-weight: 600; cursor: pointer; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink-700); box-shadow: var(--shadow-sm); transition: background 130ms, color 130ms; }
+  .btn:hover:not(:disabled) { background: var(--surface-subtle); color: var(--ink-900); }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: var(--accent-hover); color: #fff; }
+  .btn-blue { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .btn-blue:hover:not(:disabled) { background: #1d4ed8; color: #fff; }
+  .btn-ghost { border-color: transparent; background: transparent; box-shadow: none; color: var(--ink-700); padding: 6px 10px; }
+  .btn-ghost:hover:not(:disabled) { background: var(--surface-subtle); color: var(--ink-900); }
+  .btn-danger-text { border-color: transparent; background: transparent; box-shadow: none; color: var(--crit); padding: 6px 10px; }
+  .btn-danger-text:hover:not(:disabled) { background: var(--crit-bg); }
+  .btn-sm { padding: 6px 11px; font-size: 13px; }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-sm); overflow: hidden; }
+  .card-head { padding: 16px 20px; border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+  .card-head h2 { font-size: 16px; font-weight: 700; }
+  .card-sub { font-size: 13px; color: var(--ink-500); }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
+  @media (max-width: 1120px) { .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow-sm); }
+  .kpi-label { font-size: 13px; font-weight: 500; color: var(--ink-500); }
+  .kpi-value { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 28px; font-weight: 700; line-height: 1.2; margin: 8px 0 6px; }
+  .kpi-detail { font-size: 13px; color: var(--ink-500); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .toolbar { padding: 14px 20px; background: #fcfdff; border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+  .filter-group { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .input, .select { border: 1px solid var(--line-strong); background: var(--surface); padding: 8px 12px; border-radius: var(--radius); font-size: 14px; }
+  .check-inline { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; color: var(--ink-700); cursor: pointer; }
+  .check-inline input { width: 16px; height: 16px; accent-color: var(--ink-900); }
+
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; padding: 12px 14px; background: var(--surface-subtle); border-bottom: 1px solid var(--line); font-size: 13px; font-weight: 600; color: var(--ink-500); white-space: nowrap; }
+  td { padding: 13px 14px; border-bottom: 1px solid var(--line); font-size: 14px; color: var(--ink-700); white-space: nowrap; vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: #f8fafc; }
+  .cell-host { font-family: var(--font-mono); font-weight: 600; color: var(--ink-900); }
+  .cell-sub { display: block; font-size: 12px; color: var(--ink-500); font-family: var(--font-mono); margin-top: 2px; }
+  .empty-state { text-align: center; padding: 48px 20px; color: var(--ink-500); font-size: 15px; }
+
+  .meter-wrap { display: inline-flex; align-items: center; gap: 8px; }
+  .meter { width: 72px; height: 7px; background: var(--line); border-radius: 99px; overflow: hidden; }
+  .meter > i { display: block; height: 100%; border-radius: 99px; }
+
+  .badge { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 999px; font-size: 12.5px; font-weight: 600; border: 1px solid transparent; }
+  .badge-ok { background: var(--ok-bg); color: var(--ok); border-color: var(--ok-line); }
+  .badge-warn { background: var(--warn-bg); color: var(--warn); border-color: var(--warn-line); }
+  .badge-crit { background: var(--crit-bg); color: var(--crit); border-color: var(--crit-line); }
+  .badge-blue { background: var(--blue-bg); color: var(--blue); border-color: var(--blue-line); }
+  .badge-muted { background: var(--surface-subtle); color: var(--ink-500); border-color: var(--line); }
+
+  /* 页面 2 */
+  .sched-top-grid { display: grid; grid-template-columns: 1.25fr 1fr; gap: 20px; align-items: start; }
+  @media (max-width: 1024px) { .sched-top-grid { grid-template-columns: 1fr; } }
+  .form-stack { padding: 20px; display: grid; gap: 18px; }
+  .field { display: grid; gap: 6px; }
+  .field label { font-size: 14px; font-weight: 600; color: var(--ink-700); }
+  .field .help { font-size: 12.5px; color: var(--ink-500); }
+  .form-two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-actions { padding-top: 8px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+  .push-panel { padding: 20px; display: grid; gap: 16px; }
+  .info-box { background: var(--surface-subtle); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; font-size: 14px; color: var(--ink-700); }
+
+  /* 4x6 / 2x6 网格弹层时间选择器 */
+  .tp-wrap { position: relative; display: inline-flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .tp-trigger { display: inline-flex; align-items: center; gap: 10px; padding: 9px 14px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 8px; box-shadow: var(--shadow-sm); cursor: pointer; }
+  .tp-trigger:hover { border-color: var(--ink-900); }
+  .tp-trigger[aria-expanded="true"] { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14); }
+  .tp-display { font-family: var(--font-mono); font-size: 18px; font-weight: 700; letter-spacing: 0.04em; }
+  .tp-icon { color: var(--ink-500); display: inline-flex; }
+  .tp-caret { color: var(--ink-400); display: inline-flex; transition: transform 150ms; }
+  .tp-trigger[aria-expanded="true"] .tp-caret { transform: rotate(180deg); }
+  .tp-popover { position: absolute; top: calc(100% + 8px); left: 0; z-index: 60; width: 312px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 10px; box-shadow: var(--shadow-md); padding: 14px; display: none; gap: 12px; }
+  .tp-popover.open { display: grid; }
+  .tp-sec-title { font-size: 12px; font-weight: 600; color: var(--ink-500); margin-bottom: 6px; display: flex; justify-content: space-between; }
+  .tp-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
+  .tp-cell { padding: 6px 0; border: none; border-radius: 5px; background: var(--surface-subtle); color: var(--ink-700); font-family: var(--font-mono); font-size: 13px; font-weight: 600; cursor: pointer; text-align: center; }
+  .tp-cell:hover { background: var(--line); color: var(--ink-900); }
+  .tp-cell.active { background: var(--ink-900); color: #fff; }
+  .tp-presets { padding-top: 10px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 6px; }
+  .tp-preset { padding: 4px 9px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink-700); font-size: 12px; font-weight: 600; font-family: var(--font-mono); cursor: pointer; }
+  .tp-preset.active { background: var(--ink-900); border-color: var(--ink-900); color: #fff; }
+
+  .tabs { display: flex; gap: 6px; }
+  .tab { padding: 12px 14px; font-size: 14px; font-weight: 600; border: none; border-bottom: 2px solid transparent; background: transparent; color: var(--ink-500); cursor: pointer; }
+  .tab.active { color: var(--ink-900); border-bottom-color: var(--ink-900); }
+  .log-list { padding: 16px; display: grid; gap: 12px; max-height: 440px; overflow: auto; }
+  .log-item { border: 1px solid var(--line); background: #fcfdff; border-radius: var(--radius); padding: 12px 14px; font-size: 14px; }
+  .log-meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-bottom: 6px; font-size: 13px; color: var(--ink-500); }
+  .md-box { font-family: var(--font-mono); font-size: 13px; line-height: 1.6; background: #f8fafc; border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; white-space: pre-wrap; overflow: auto; max-height: 220px; }
+
+  /* 弹窗 */
+  dialog { margin: auto; border: 1px solid var(--line-strong); border-radius: 8px; box-shadow: var(--shadow-md); padding: 0; width: min(580px, 94vw); background: var(--surface); color: var(--ink-900); }
+  dialog::backdrop { background: rgba(15, 23, 42, 0.45); }
+  .dlg-head { padding: 18px 22px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
+  .dlg-head h3 { font-size: 18px; font-weight: 700; }
+  .dlg-body { padding: 20px 22px; display: grid; gap: 15px; }
+  .dlg-foot { padding: 14px 22px; background: var(--canvas); border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 10px; }
+  .err-msg { font-size: 13px; color: var(--crit); font-weight: 500; min-height: 18px; }
+  .ssh-panel { background: var(--canvas); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; display: grid; gap: 12px; }
+  .drop-zone { border: 2px dashed var(--line-strong); border-radius: var(--radius); padding: 18px; text-align: center; background: var(--canvas); display: grid; gap: 10px; justify-items: center; }
+  .preview-box { max-height: 200px; overflow: auto; border: 1px solid var(--line); border-radius: var(--radius); }
+  .preview-box th, .preview-box td { padding: 7px 9px; font-size: 12.5px; }
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="topbar-left">
+        <a class="brand" href="#/servers">
+          <div class="brand-mark" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="3" width="20" height="7" rx="1"></rect>
+              <rect x="2" y="14" width="20" height="7" rx="1"></rect>
+              <line x1="6" y1="6.5" x2="6.01" y2="6.5"></line>
+              <line x1="6" y1="17.5" x2="6.01" y2="17.5"></line>
+            </svg>
+          </div>
+          <span class="brand-title">智能服务器巡检系统</span>
+        </a>
+        <nav class="nav-links" aria-label="主页面切换">
+          <button class="nav-link active" type="button" data-route="servers">
+            服务器巡检
+            <span class="nav-pill" id="nav-server-count">6</span>
+          </button>
+          <button class="nav-link" type="button" data-route="schedule">
+            每日定时推送与邮箱
+            <span class="nav-pill" id="nav-sched-pill">09:00</span>
+          </button>
+        </nav>
+      </div>
+      <div class="role-control" title="切换身份验证 401/403 后端权限边界">
+        <label for="role-select">当前身份</label>
+        <select id="role-select">
+          <option value="admin">admin（可登记 / 导入 / 巡检 / 推送）</option>
+          <option value="viewer">viewer（仅查看 / 导出 → 写操作 403）</option>
+          <option value="anon">未登录（写操作 → 401）</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <div class="toast-bar" id="toast" role="status" aria-live="polite">
+    <span id="toast-msg"></span>
+    <button class="btn btn-ghost btn-sm" id="toast-close" type="button">关闭</button>
+  </div>
+
+  <!-- 页面 1：服务器目标登记（含 IP）+ 主动巡检检测 -->
+  <main class="page active" id="page-servers">
+    <div class="page-head">
+      <div>
+        <h1>服务器资产与实时巡检检测</h1>
+        <p>登记或按 IP 批量导入目标服务器；内存（MemAvailable）与 CPU 使用率由采集引擎主动检测，只读不可手改。</p>
+      </div>
+      <div class="head-actions">
+        <button class="btn" id="btn-import" type="button">导入目标 CSV / JSON</button>
+        <button class="btn" id="btn-export-csv" type="button">导出 CSV</button>
+        <button class="btn" id="btn-export-json" type="button">导出 JSON</button>
+        <button class="btn" id="btn-add" type="button">+ 登记目标服务器</button>
+        <button class="btn btn-blue" id="btn-inspect-all" type="button">立即全量巡检</button>
+      </div>
+    </div>
+
+    <section class="kpi-grid" aria-label="巡检汇总统计">
+      <div class="kpi">
+        <div class="kpi-label">已纳管目标</div>
+        <div class="kpi-value" id="kpi-total">0</div>
+        <div class="kpi-detail" id="kpi-types">-</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">厂商覆盖</div>
+        <div class="kpi-value" id="kpi-vendors-cnt">0</div>
+        <div class="kpi-detail" id="kpi-vendors">-</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">已测可用总内存</div>
+        <div class="kpi-value" id="kpi-mem-free" style="color:var(--ok)">0 G</div>
+        <div class="kpi-detail" id="kpi-mem-total">-</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">平均 CPU（已采）</div>
+        <div class="kpi-value" id="kpi-cpu-avg">0%</div>
+        <div class="kpi-detail" id="kpi-cores">-</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">告警 / 检测失败</div>
+        <div class="kpi-value" id="kpi-alert" style="color:var(--crit)">0</div>
+        <div class="kpi-detail" id="kpi-alert-detail">-</div>
+      </div>
+    </section>
+
+    <section class="card" aria-label="服务器巡检列表">
+      <div class="toolbar">
+        <div class="filter-group">
+          <input class="input" id="filter-q" type="search" placeholder="搜索主机名或 IP..." style="width:210px" />
+          <select class="select" id="filter-type">
+            <option value="">全部种类</option>
+            <option value="物理机">物理机</option>
+            <option value="虚拟机">虚拟机</option>
+            <option value="容器节点">容器节点</option>
+          </select>
+          <select class="select" id="filter-vendor">
+            <option value="">全部厂商</option>
+            <option value="戴尔 Dell">戴尔 Dell</option>
+            <option value="华为 TaiShan">华为 TaiShan</option>
+            <option value="阿里云 ECS">阿里云 ECS</option>
+            <option value="浪潮 Inspur">浪潮 Inspur</option>
+          </select>
+          <select class="select" id="filter-collector">
+            <option value="">全部采集方式</option>
+            <option value="ssh">SSH 远程</option>
+            <option value="local">本机真实采集</option>
+            <option value="mock">测试模拟</option>
+          </select>
+          <label class="check-inline">
+            <input type="checkbox" id="filter-alert-only" />
+            仅看高负载 / 检测异常
+          </label>
+        </div>
+        <span class="card-sub mono" id="table-count">显示 0 / 共 0 台</span>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>主机名 / IP 地址</th>
+              <th>种类 · 厂商</th>
+              <th>采集方式</th>
+              <th>总内存 / 可用剩余</th>
+              <th>CPU（检测值）</th>
+              <th>巡检状态</th>
+              <th>最后检测时间</th>
+              <th style="text-align:right">操作</th>
+            </tr>
+          </thead>
+          <tbody id="server-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- 页面 2：每日定时推送邮箱配置与审计 -->
+  <main class="page" id="page-schedule">
+    <div class="page-head">
+      <div>
+        <h1>每日定时推送与邮箱配置</h1>
+        <p>每日到达设定时间先自动触发全量巡检，再将最新汇总与异常明细以 Markdown 格式推送到指定邮箱。</p>
+      </div>
+      <span class="badge badge-ok" id="sched-status-badge">每日 09:00 已启用</span>
+    </div>
+
+    <div class="sched-top-grid">
+      <section class="card" style="overflow:visible">
+        <div class="card-head">
+          <h2>定时任务规则</h2>
+          <span class="card-sub">持久化保存 · 服务重启自动重载 · 同分钟幂等防重发</span>
+        </div>
+        <form class="form-stack" id="sched-form">
+          <div class="field">
+            <label class="check-inline">
+              <input type="checkbox" id="sched-enabled" checked />
+              <strong>启用每日自动巡检并推送邮件</strong>
+            </label>
+          </div>
+
+          <div class="field">
+            <label>每日推送时间节点</label>
+            <div class="tp-wrap" id="tp-wrap">
+              <button class="tp-trigger" id="tp-trigger" type="button" aria-expanded="false" aria-haspopup="dialog">
+                <span class="tp-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="9"></circle>
+                    <polyline points="12 7 12 12 15.5 14"></polyline>
+                  </svg>
+                </span>
+                <span class="tp-display" id="tp-display">09 : 00</span>
+                <span class="tp-caret" aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </span>
+              </button>
+              <span class="card-sub">每日自动执行 · 服务端本地时区</span>
+
+              <div class="tp-popover" id="tp-popover" role="dialog" aria-label="选择每日推送时间">
+                <div>
+                  <div class="tp-sec-title"><span>小时（00–23）</span><span class="mono" id="tp-cur-h">09 时</span></div>
+                  <div class="tp-grid" id="tp-hours"></div>
+                </div>
+                <div>
+                  <div class="tp-sec-title"><span>分钟（每 5 分）</span><span class="mono" id="tp-cur-m">00 分</span></div>
+                  <div class="tp-grid" id="tp-mins"></div>
+                </div>
+                <div class="tp-presets">
+                  <button class="tp-preset" type="button" data-time="08:00">08:00 早班</button>
+                  <button class="tp-preset active" type="button" data-time="09:00">09:00 上班</button>
+                  <button class="tp-preset" type="button" data-time="12:00">12:00 午检</button>
+                  <button class="tp-preset" type="button" data-time="18:00">18:00 下班</button>
+                  <button class="tp-preset" type="button" data-time="22:00">22:00 晚检</button>
+                </div>
+              </div>
+              <input id="sched-time" type="hidden" value="09:00" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label>当前 SMTP 通道模式</label>
+            <div class="input mono" style="background:var(--surface-subtle);color:var(--ink-700)">本地安全模拟模式（生产通过 SMTP_HOST / USER / PASS 环境变量切换真发信）</div>
+          </div>
+
+          <div class="field">
+            <label for="sched-emails">指定收件人邮箱列表</label>
+            <input class="input mono" id="sched-emails" type="text" value="ops-oncall@corp.local, sre-lead@corp.local" required />
+            <span class="help">支持多个收件邮箱，英文逗号分隔</span>
+          </div>
+
+          <div class="form-actions">
+            <span class="card-sub" id="sched-last-saved">当前生效：每日 09:00 → 2 个收件人</span>
+            <button class="btn btn-primary" type="submit">保存定时配置</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h2>手动立即推送（测试与演练）</h2>
+          <span class="card-sub">含 200 / 409 / 504 安全状态验证</span>
+        </div>
+        <div class="push-panel">
+          <div class="info-box">
+            <strong>安全红线：</strong>推送前强制确认收件人与本次巡检摘要；并发重复点击返回 <code>409</code>；SMTP 超时返回 <code>504</code> 并留审计，<strong>绝不自动重试</strong>。
+          </div>
+          <div class="field">
+            <label for="smtp-sim">模拟 SMTP 响应场景（原型体验用）</label>
+            <select class="select" id="smtp-sim">
+              <option value="ok">正常送达（200 · 写入模拟收件箱）</option>
+              <option value="conflict">并发重复点击（409 · 防重锁拦截）</option>
+              <option value="timeout">SMTP 超时（504 · 结果未知，禁止自动重试）</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" id="btn-push-now" type="button" style="width:100%">
+            立即推送最新巡检报告
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <section class="card">
+      <div class="card-head" style="padding-bottom:0;border-bottom:none">
+        <div class="tabs" role="tablist">
+          <button class="tab active" data-tab="outbox" type="button">模拟收件箱 (<span id="outbox-cnt">1</span>)</button>
+          <button class="tab" data-tab="audit" type="button">全量操作审计 (<span id="audit-cnt">1</span>)</button>
+        </div>
+        <div class="head-actions" style="padding-bottom:8px">
+          <button class="btn btn-sm" id="btn-download-md" type="button">下载当前 .md 报告</button>
+        </div>
+      </div>
+      <div style="border-top:1px solid var(--line)">
+        <div id="tab-outbox"><div class="log-list" id="outbox-list"></div></div>
+        <div id="tab-audit" style="display:none"><div class="log-list" id="audit-list"></div></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 弹窗 1：登记 / 编辑目标服务器（仅录静态资产与 IP / 采集方式，不再手填内存和 CPU） -->
+  <dialog id="dlg-server">
+    <div class="dlg-head">
+      <h3 id="dlg-server-title">登记目标服务器</h3>
+      <button class="btn btn-ghost btn-sm" type="button" id="dlg-server-x">关闭</button>
+    </div>
+    <form id="server-form">
+      <div class="dlg-body">
+        <input type="hidden" id="f-id" />
+        <div class="form-two">
+          <div class="field">
+            <label for="f-host">主机名（唯一）</label>
+            <input class="input mono" id="f-host" required placeholder="prod-k8s-node-05" />
+          </div>
+          <div class="field">
+            <label for="f-address">服务器 IP / 地址</label>
+            <input class="input mono" id="f-address" required placeholder="10.10.2.15" />
+          </div>
+        </div>
+        <div class="form-two">
+          <div class="field">
+            <label for="f-type">服务器种类</label>
+            <select class="select" id="f-type">
+              <option value="物理机">物理机</option>
+              <option value="虚拟机">虚拟机</option>
+              <option value="容器节点">容器节点</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-vendor">厂商</label>
+            <select class="select" id="f-vendor">
+              <option value="戴尔 Dell">戴尔 Dell</option>
+              <option value="华为 TaiShan">华为 TaiShan</option>
+              <option value="阿里云 ECS">阿里云 ECS</option>
+              <option value="浪潮 Inspur">浪潮 Inspur</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="f-collector">采集驱动方式</label>
+          <select class="select" id="f-collector">
+            <option value="ssh">ssh — 远程 Linux 只读采集（/proc/meminfo + /proc/stat）</option>
+            <option value="local">local — 本机真实系统指标采集</option>
+            <option value="mock">mock — 测试替身（离线演练）</option>
+          </select>
+          <span class="help">内存与 CPU 指标将在登记后由采集引擎主动检测，此处无需手填。</span>
+        </div>
+
+        <div class="ssh-panel" id="ssh-fields">
+          <div class="form-two">
+            <div class="field">
+              <label for="f-ssh-port">SSH 端口</label>
+              <input class="input mono" id="f-ssh-port" type="number" min="1" max="65535" value="22" />
+            </div>
+            <div class="field">
+              <label for="f-ssh-user">SSH 只读账号</label>
+              <input class="input mono" id="f-ssh-user" placeholder="ops-ro" value="ops-ro" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="f-ssh-cred">SSH 凭据引用别名（绝不填明文密码或私钥）</label>
+            <input class="input mono" id="f-ssh-cred" placeholder="prod-ro-key" value="prod-ro-key" />
+            <span class="help">后端按别名从只读密钥目录或环境变量映射私钥文件。</span>
+          </div>
+        </div>
+        <div class="err-msg" id="f-err"></div>
+      </div>
+      <div class="dlg-foot">
+        <button class="btn" type="button" id="dlg-server-cancel">取消</button>
+        <button class="btn btn-primary" type="submit">保存目标</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- 弹窗 2：批量导入目标服务器（含 IP 与采集参数） -->
+  <dialog id="dlg-import">
+    <div class="dlg-head">
+      <h3>批量导入目标服务器（含 IP 与采集方式）</h3>
+      <button class="btn btn-ghost btn-sm" type="button" id="dlg-import-x">关闭</button>
+    </div>
+    <div class="dlg-body">
+      <div class="drop-zone">
+        <div style="font-size:14px;color:var(--ink-700)">上传 <strong>.csv</strong> 或 <strong>.json</strong>（字段：<code>host, address, type, vendor, collectorType, sshPort, sshUser, sshCredentialRef</code>）</div>
+        <input id="import-file" type="file" accept=".csv,.json,text/csv,application/json" />
+        <button class="btn btn-sm" id="btn-dl-template" type="button">下载标准 IP 导入 CSV 模板</button>
+      </div>
+      <div class="field">
+        <label for="import-conflict-policy">主机名重复处理策略</label>
+        <select class="select" id="import-conflict-policy">
+          <option value="skip">跳过已存在主机名（保留原记录，推荐）</option>
+          <option value="overwrite">覆盖更新连接信息</option>
+        </select>
+      </div>
+      <div id="import-summary" style="font-size:14px;color:var(--ink-700)"></div>
+      <div class="preview-box" id="import-preview" style="display:none"></div>
+      <div class="err-msg" id="import-err"></div>
+    </div>
+    <div class="dlg-foot">
+      <button class="btn" type="button" id="dlg-import-cancel">取消</button>
+      <button class="btn btn-primary" type="button" id="btn-import-commit" disabled>确认导入（初始状态：待检测）</button>
+    </div>
+  </dialog>
+
+  <!-- 弹窗 3：确认删除 / 确认推送 -->
+  <dialog id="dlg-confirm">
+    <div class="dlg-head">
+      <h3 id="confirm-title">确认操作</h3>
+      <button class="btn btn-ghost btn-sm" type="button" id="confirm-x">关闭</button>
+    </div>
+    <div class="dlg-body">
+      <p id="confirm-desc" style="font-size:14.5px;color:var(--ink-700)"></p>
+      <pre class="md-box" id="confirm-detail"></pre>
+    </div>
+    <div class="dlg-foot">
+      <button class="btn" type="button" id="confirm-cancel">取消（不发出请求）</button>
+      <button class="btn btn-primary" type="button" id="confirm-ok">确认执行</button>
+    </div>
+  </dialog>
+
+  <script>
+    // 静态目标 + 最新巡检快照（动态指标由采集引擎写入）
+    let servers = [
+      { id: 1, host: 'ops-console-local', address: '127.0.0.1', type: '容器节点', vendor: '本地宿主机', collectorType: 'local', sshPort: null, sshUser: '', sshCredentialRef: '', memTotal: 32, memFree: 14.6, cores: 16, cpu: 24, probeStatus: 'OK', lastCheckedAt: '2026-11-23 09:00:01', probeError: '' },
+      { id: 2, host: 'prod-k8s-node-01', address: '10.10.2.11', type: '物理机', vendor: '戴尔 Dell', collectorType: 'ssh', sshPort: 22, sshUser: 'ops-ro', sshCredentialRef: 'prod-ro-key', memTotal: 256, memFree: 38, cores: 64, cpu: 86, probeStatus: 'HIGH_LOAD', lastCheckedAt: '2026-11-23 09:00:02', probeError: '' },
+      { id: 3, host: 'prod-db-master-01', address: '10.10.2.21', type: '物理机', vendor: '华为 TaiShan', collectorType: 'ssh', sshPort: 22, sshUser: 'ops-ro', sshCredentialRef: 'prod-ro-key', memTotal: 512, memFree: 164, cores: 128, cpu: 64, probeStatus: 'WARN', lastCheckedAt: '2026-11-23 09:00:02', probeError: '' },
+      { id: 4, host: 'prod-api-vm-03', address: '10.10.8.33', type: '虚拟机', vendor: '阿里云 ECS', collectorType: 'ssh', sshPort: 2222, sshUser: 'ops-ro', sshCredentialRef: 'cloud-ro-key', memTotal: 64, memFree: 39, cores: 16, cpu: 28, probeStatus: 'OK', lastCheckedAt: '2026-11-23 09:00:02', probeError: '' },
+      { id: 5, host: 'edge-gw-node-02', address: '10.10.9.52', type: '容器节点', vendor: '浪潮 Inspur', collectorType: 'ssh', sshPort: 22, sshUser: 'ops-ro', sshCredentialRef: 'edge-ro-key', memTotal: null, memFree: null, cores: null, cpu: null, probeStatus: 'TIMEOUT', lastCheckedAt: '2026-11-23 09:00:08', probeError: 'SSH 连接超过 8s 超时（已隔离，未重试）' },
+      { id: 6, host: 'lab-mock-01', address: '192.168.50.10', type: '虚拟机', vendor: '戴尔 Dell', collectorType: 'mock', sshPort: null, sshUser: '', sshCredentialRef: '', memTotal: 128, memFree: 84, cores: 32, cpu: 31, probeStatus: 'OK', lastCheckedAt: '2026-11-23 09:00:01', probeError: '' }
+    ];
+    let nextId = 7;
+    let schedule = { enabled: true, time: '09:00', emails: ['ops-oncall@corp.local', 'sre-lead@corp.local'] };
+    const outbox = [{ opId: 'op-init-0900', time: '2026-11-23 09:00:09', status: '200 SENT (mock)', recipients: 'ops-oncall@corp.local, sre-lead@corp.local', body: '# 服务器每日巡检报告（2026-11-23 09:00）\n（系统预置历史样例邮件）' }];
+    const audits = [{ opId: 'op-init-0900', time: '2026-11-23 09:00:09', actor: 'scheduler', action: 'SCHEDULED_INSPECT_AND_PUSH', code: 200, detail: '全量巡检 6 台（成功 5 / 超时 1），报告已发送' }];
+    let pendingImportRows = [];
+    let confirmAction = null;
+
+    const nowStr = () => new Date().toISOString().replace('T', ' ').slice(0, 19);
+    const makeOpId = () => 'op-' + Math.random().toString(16).slice(2, 10);
+    const currentRole = () => document.getElementById('role-select').value;
+    function showToast(type, msg) {
+      const bar = document.getElementById('toast');
+      bar.className = 'toast-bar show ' + type;
+      document.getElementById('toast-msg').textContent = msg;
+    }
+
+    function checkWritePermission(actionName) {
+      const role = currentRole();
+      const opId = makeOpId();
+      if (role === 'anon') {
+        audits.unshift({ opId, time: nowStr(), actor: 'anonymous', action: actionName, code: 401, detail: '未登录写操作被拒绝' });
+        renderLogs();
+        showToast('err', `[401 Unauthorized · ${opId}] 未登录禁止执行 ${actionName}，请切为 admin。`);
+        return false;
+      }
+      if (role === 'viewer') {
+        audits.unshift({ opId, time: nowStr(), actor: 'viewer', action: actionName, code: 403, detail: 'viewer 越权写操作被拒绝' });
+        renderLogs();
+        showToast('err', `[403 Forbidden · ${opId}] viewer 仅只读，无权执行 ${actionName}，已记审计。`);
+        return false;
+      }
+      return true;
+    }
+
+    function statusMeta(s) {
+      switch (s.probeStatus) {
+        case 'OK': return { cls: 'ok', text: '正常', color: '#059669' };
+        case 'WARN': return { cls: 'warn', text: '关注', color: '#d97706' };
+        case 'HIGH_LOAD': return { cls: 'crit', text: '高负载', color: '#dc2626' };
+        case 'TIMEOUT': return { cls: 'crit', text: '检测超时', color: '#dc2626' };
+        case 'UNREACHABLE': return { cls: 'crit', text: '不可达', color: '#dc2626' };
+        default: return { cls: 'muted', text: '待检测', color: '#64748b' };
+      }
+    }
+    function collectorBadge(c) {
+      if (c === 'local') return '<span class="badge badge-blue mono">local 本机</span>';
+      if (c === 'ssh') return '<span class="badge badge-ok mono">ssh 远程</span>';
+      return '<span class="badge badge-muted mono">mock 模拟</span>';
+    }
+    function isAlertRow(s) {
+      return ['HIGH_LOAD', 'TIMEOUT', 'UNREACHABLE'].includes(s.probeStatus);
+    }
+
+    // 模拟采集引擎执行一次检测（演示真实流转）
+    function runProbeOne(s) {
+      const ts = nowStr();
+      if (s.address.endsWith('.52')) {
+        s.probeStatus = 'TIMEOUT';
+        s.probeError = 'SSH 8s 超时（单台隔离）';
+        s.lastCheckedAt = ts;
+        return false;
+      }
+      const baseMem = s.memTotal || (s.collectorType === 'local' ? 32 : 128);
+      const cores = s.cores || (s.collectorType === 'local' ? 16 : 32);
+      const cpu = Math.min(96, Math.max(8, Math.round((s.cpu ?? 35) + (Math.random() * 14 - 7))));
+      const free = Number(Math.max(4, Math.min(baseMem - 2, (s.memFree ?? baseMem * 0.5) + (Math.random() * 8 - 4))).toFixed(1));
+      s.memTotal = baseMem;
+      s.memFree = free;
+      s.cores = cores;
+      s.cpu = cpu;
+      s.lastCheckedAt = ts;
+      s.probeError = '';
+      const ratio = free / baseMem;
+      s.probeStatus = (cpu >= 80 || ratio < 0.15) ? 'HIGH_LOAD' : (cpu >= 60 || ratio < 0.25) ? 'WARN' : 'OK';
+      return true;
+    }
+
+    function switchRoute(route) {
+      const valid = route === 'schedule' ? 'schedule' : 'servers';
+      window.location.hash = '#/' + valid;
+      document.querySelectorAll('.nav-link').forEach(b => b.classList.toggle('active', b.dataset.route === valid));
+      document.getElementById('page-servers').classList.toggle('active', valid === 'servers');
+      document.getElementById('page-schedule').classList.toggle('active', valid === 'schedule');
+    }
+    document.querySelectorAll('.nav-link').forEach(b => b.addEventListener('click', () => switchRoute(b.dataset.route)));
+    window.addEventListener('hashchange', () => switchRoute(window.location.hash.replace(/^#\/?/, '')));
+
+    function getFiltered() {
+      const q = document.getElementById('filter-q').value.trim().toLowerCase();
+      const ft = document.getElementById('filter-type').value;
+      const fv = document.getElementById('filter-vendor').value;
+      const fc = document.getElementById('filter-collector').value;
+      const ao = document.getElementById('filter-alert-only').checked;
+      return servers.filter(s => {
+        if (q && !s.host.toLowerCase().includes(q) && !s.address.toLowerCase().includes(q)) return false;
+        if (ft && s.type !== ft) return false;
+        if (fv && s.vendor !== fv) return false;
+        if (fc && s.collectorType !== fc) return false;
+        if (ao && !isAlertRow(s)) return false;
+        return true;
+      });
+    }
+
+    function buildMarkdown() {
+      const okRows = servers.filter(s => s.memTotal != null);
+      const totalMem = okRows.reduce((a, s) => a + s.memTotal, 0);
+      const freeMem = Number(okRows.reduce((a, s) => a + s.memFree, 0).toFixed(1));
+      const pct = totalMem ? ((freeMem / totalMem) * 100).toFixed(1) : '0.0';
+      const failed = servers.filter(s => ['TIMEOUT', 'UNREACHABLE'].includes(s.probeStatus));
+      const high = servers.filter(s => s.probeStatus === 'HIGH_LOAD');
+      return [
+        `# 服务器每日巡检报告（${nowStr()}）`,
+        '',
+        '## 一、巡检汇总',
+        `- 纳管目标总数：${servers.length} 台（已采集 ${okRows.length} 台 / 采集失败 ${failed.length} 台）`,
+        `- 内存汇总（MemAvailable）：总计 ${totalMem} GB ｜ 可用剩余 ${freeMem} GB（${pct}%）`,
+        `- 高负载告警：${high.length} 台${high.length ? '（' + high.map(h => h.host).join(', ') + '）' : ''}`,
+        `- 采集异常主机：${failed.length} 台${failed.length ? '（' + failed.map(f => `${f.host}[${f.address}]: ${f.probeError}`).join('；') + '）' : ''}`,
+        '',
+        '## 二、巡检明细',
+        '| 主机名 | IP 地址 | 种类 | 厂商 | 采集方式 | 总内存(GB) | 可用内存(GB) | CPU | 状态 | 检测时间 |',
+        '|---|---|---|---|---|---:|---:|---:|---|---|',
+        ...servers.map(s => `| ${s.host} | ${s.address} | ${s.type} | ${s.vendor} | ${s.collectorType} | ${s.memTotal ?? '-'} | ${s.memFree ?? '-'} | ${s.cpu != null ? s.cpu + '%' : '-'} | ${statusMeta(s).text} | ${s.lastCheckedAt || '待检测'} |`)
+      ].join('\n');
+    }
+
+    function renderAll() {
+      const total = servers.length;
+      const byType = {}, byVendor = {};
+      let totalMem = 0, freeMem = 0, totalCores = 0, sumCpu = 0, probedCnt = 0, highCnt = 0, failCnt = 0;
+      servers.forEach(s => {
+        byType[s.type] = (byType[s.type] || 0) + 1;
+        byVendor[s.vendor] = (byVendor[s.vendor] || 0) + 1;
+        if (s.memTotal != null) {
+          totalMem += s.memTotal;
+          freeMem += s.memFree;
+          totalCores += s.cores;
+          sumCpu += s.cpu;
+          probedCnt++;
+        }
+        if (s.probeStatus === 'HIGH_LOAD') highCnt++;
+        if (['TIMEOUT', 'UNREACHABLE'].includes(s.probeStatus)) failCnt++;
+      });
+
+      document.getElementById('nav-server-count').textContent = total;
+      document.getElementById('nav-sched-pill').textContent = schedule.enabled ? schedule.time : '已停用';
+      document.getElementById('kpi-total').textContent = total;
+      document.getElementById('kpi-types').textContent = Object.entries(byType).map(([k, v]) => `${k} ${v}`).join(' · ') || '暂无';
+      document.getElementById('kpi-vendors-cnt').textContent = `${Object.keys(byVendor).length} 家`;
+      document.getElementById('kpi-vendors').textContent = Object.entries(byVendor).map(([k, v]) => `${k.split(' ')[0]} ${v}`).join(' · ') || '暂无';
+      document.getElementById('kpi-mem-free').textContent = `${freeMem.toFixed(1)} G`;
+      document.getElementById('kpi-mem-total').textContent = `总计 ${totalMem} G（可用 ${totalMem ? ((freeMem / totalMem) * 100).toFixed(1) : '0.0'}%）`;
+      document.getElementById('kpi-cpu-avg').textContent = probedCnt ? `${(sumCpu / probedCnt).toFixed(1)}%` : '-';
+      document.getElementById('kpi-cores').textContent = `已采 ${probedCnt} 台 · 共 ${totalCores} vCPU`;
+      document.getElementById('kpi-alert').textContent = highCnt + failCnt;
+      document.getElementById('kpi-alert-detail').textContent = `高负载 ${highCnt} 台 · 采集失败 ${failCnt} 台`;
+
+      const filtered = getFiltered();
+      document.getElementById('table-count').textContent = `显示 ${filtered.length} / 共 ${total} 台`;
+
+      const tbody = document.getElementById('server-tbody');
+      if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="empty-state">无匹配目标服务器，可清空筛选或点击“+ 登记目标服务器 / 导入目标”。</td></tr>';
+      } else {
+        tbody.innerHTML = filtered.map(s => {
+          const st = statusMeta(s);
+          const memCell = s.memTotal != null
+            ? `<span class="mono">${s.memTotal} G / 剩 <strong>${s.memFree} G</strong></span>`
+            : `<span class="card-sub">${s.probeError || '待检测'}</span>`;
+          const cpuCell = s.cpu != null
+            ? `<span class="meter-wrap mono"><span class="meter"><i style="width:${s.cpu}%;background:${st.color}"></i></span>${s.cpu}% (${s.cores}C)</span>`
+            : `<span class="card-sub">-</span>`;
+          return `
+            <tr>
+              <td><span class="cell-host">${s.host}</span><span class="cell-sub">${s.address}${s.collectorType === 'ssh' ? `:${s.sshPort} (${s.sshUser})` : ''}</span></td>
+              <td>${s.type}<span class="cell-sub">${s.vendor}</span></td>
+              <td>${collectorBadge(s.collectorType)}</td>
+              <td>${memCell}</td>
+              <td>${cpuCell}</td>
+              <td><span class="badge badge-${st.cls}" title="${s.probeError || ''}">${st.text}</span></td>
+              <td class="mono" style="font-size:12.5px;color:var(--ink-500)">${s.lastCheckedAt || '尚未检测'}</td>
+              <td style="text-align:right">
+                <button class="btn btn-ghost btn-sm" type="button" data-probe="${s.id}">检测</button>
+                <button class="btn btn-ghost btn-sm" type="button" data-edit="${s.id}">编辑</button>
+                <button class="btn btn-danger-text btn-sm" type="button" data-del="${s.id}">删除</button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      const sb = document.getElementById('sched-status-badge');
+      sb.className = schedule.enabled ? 'badge badge-ok' : 'badge badge-muted';
+      sb.textContent = schedule.enabled ? `每日 ${schedule.time} 已启用` : `已停用（原计划 ${schedule.time}）`;
+      document.getElementById('sched-last-saved').textContent = `当前生效：${schedule.enabled ? '每日 ' + schedule.time : '已停用'} → ${schedule.emails.length} 个收件人`;
+      renderLogs();
+    }
+
+    function renderLogs() {
+      document.getElementById('outbox-cnt').textContent = outbox.length;
+      document.getElementById('audit-cnt').textContent = audits.length;
+      document.getElementById('outbox-list').innerHTML = outbox.map(m => `
+        <div class="log-item">
+          <div class="log-meta mono"><span><strong>${m.status}</strong> · ${m.opId}</span><span>${m.time}</span></div>
+          <div style="margin-bottom:8px">收件人：<span class="mono">${m.recipients}</span></div>
+          <pre class="md-box" style="max-height:130px;font-size:12.5px">${m.body}</pre>
+        </div>
+      `).join('');
+      document.getElementById('audit-list').innerHTML = audits.map(a => `
+        <div class="log-item">
+          <div class="log-meta mono"><span><strong>${a.action}</strong> · HTTP ${a.code} · ${a.opId}</span><span>${a.time}</span></div>
+          <div>操作者：<span class="mono">${a.actor}</span> ｜ ${a.detail}</div>
+        </div>
+      `).join('');
+    }
+
+    // 导出工具
+    function downloadBlob(filename, content, mime) {
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    }
+    function csvCell(val) {
+      let s = String(val ?? '');
+      if (/^[=+\-@]/.test(s)) s = "'" + s;
+      if (/[",\n\r]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
+      return s;
+    }
+
+    document.getElementById('btn-export-csv').addEventListener('click', () => {
+      const rows = getFiltered();
+      const cols = ['host', 'address', 'type', 'vendor', 'collectorType', 'sshPort', 'sshUser', 'sshCredentialRef', 'memTotal', 'memFree', 'cores', 'cpu', 'probeStatus', 'lastCheckedAt'];
+      const lines = [cols.join(','), ...rows.map(r => cols.map(k => csvCell(r[k])).join(','))];
+      downloadBlob(`ops-inspect-export-${new Date().toISOString().slice(0, 10)}.csv`, '\uFEFF' + lines.join('\r\n'), 'text/csv;charset=utf-8');
+      showToast('ok', `已导出 ${rows.length} 台服务器连接信息与最新巡检结果（CSV UTF-8 BOM）。`);
+    });
+    document.getElementById('btn-export-json').addEventListener('click', () => {
+      const rows = getFiltered().map(({ id, ...rest }) => rest);
+      downloadBlob(`ops-inspect-export-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(rows, null, 2), 'application/json;charset=utf-8');
+      showToast('ok', `已导出 ${rows.length} 台服务器 JSON。`);
+    });
+
+    // 下载标准 IP 导入模板
+    document.getElementById('btn-dl-template').addEventListener('click', () => {
+      const sample = [
+        'host,address,type,vendor,collectorType,sshPort,sshUser,sshCredentialRef',
+        'prod-cache-01,10.10.3.18,物理机,华为 TaiShan,ssh,22,ops-ro,prod-ro-key',
+        'prod-web-08,10.10.4.25,虚拟机,阿里云 ECS,ssh,2222,ops-ro,cloud-ro-key',
+        'local-host-01,127.0.0.1,容器节点,本地宿主机,local,,,'
+      ].join('\r\n');
+      downloadBlob('servers-ip-import-template.csv', '\uFEFF' + sample, 'text/csv;charset=utf-8');
+      showToast('ok', '已下载标准 IP 导入 CSV 模板，可直接上传试跑批量导入。');
+    });
+
+    // 批量导入（静态目标与 IP）
+    function parseCsv(text) {
+      const lines = text.replace(/^\uFEFF/, '').trim().split(/\r?\n/).filter(l => l.trim());
+      if (lines.length < 2) throw new Error('CSV 至少需表头与 1 行数据');
+      const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+      return lines.slice(1).map((line, i) => {
+        const cols = line.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+        const o = { _line: i + 2 };
+        headers.forEach((h, idx) => { o[h] = cols[idx] ?? ''; });
+        return o;
+      });
+    }
+    function validateImport(list) {
+      const valid = [], errors = [], seen = new Set();
+      list.forEach((r, idx) => {
+        const ln = r._line || idx + 1;
+        const host = String(r.host || '').trim();
+        const address = String(r.address || '').trim();
+        const type = String(r.type || '物理机').trim();
+        const vendor = String(r.vendor || '其他').trim();
+        const collectorType = String(r.collectorType || 'ssh').trim().toLowerCase();
+        const sshPort = collectorType === 'ssh' ? Number(r.sshPort || 22) : null;
+        const sshUser = collectorType === 'ssh' ? String(r.sshUser || 'ops-ro').trim() : '';
+        const sshCredentialRef = collectorType === 'ssh' ? String(r.sshCredentialRef || '').trim() : '';
+        if (!host) return errors.push(`第 ${ln} 行缺少 host`);
+        if (!address) return errors.push(`第 ${ln} 行 (${host}) 缺少 IP/address`);
+        if (!['ssh', 'local', 'mock'].includes(collectorType)) return errors.push(`第 ${ln} 行 collectorType 非法`);
+        if (collectorType === 'ssh' && (!Number.isInteger(sshPort) || sshPort < 1 || sshPort > 65535)) return errors.push(`第 ${ln} 行 SSH 端口无效`);
+        if (seen.has(host)) return errors.push(`第 ${ln} 行文件内主机名 ${host} 重复`);
+        seen.add(host);
+        valid.push({ host, address, type, vendor, collectorType, sshPort, sshUser, sshCredentialRef });
+      });
+      return { valid, errors };
+    }
+
+    const dlgImport = document.getElementById('dlg-import');
+    document.getElementById('btn-import').addEventListener('click', () => {
+      if (!checkWritePermission('IMPORT_TARGETS')) return;
+      pendingImportRows = [];
+      document.getElementById('import-file').value = '';
+      document.getElementById('import-summary').textContent = '';
+      document.getElementById('import-preview').style.display = 'none';
+      document.getElementById('import-err').textContent = '';
+      document.getElementById('btn-import-commit').disabled = true;
+      dlgImport.showModal();
+    });
+    document.getElementById('dlg-import-x').addEventListener('click', () => dlgImport.close());
+    document.getElementById('dlg-import-cancel').addEventListener('click', () => dlgImport.close());
+
+    document.getElementById('import-file').addEventListener('change', async e => {
+      const file = e.target.files[0];
+      const errEl = document.getElementById('import-err');
+      const sumEl = document.getElementById('import-summary');
+      const prevEl = document.getElementById('import-preview');
+      const btn = document.getElementById('btn-import-commit');
+      errEl.textContent = ''; sumEl.textContent = ''; prevEl.style.display = 'none'; btn.disabled = true; pendingImportRows = [];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const raw = file.name.toLowerCase().endsWith('.json') ? JSON.parse(text) : parseCsv(text);
+        if (!Array.isArray(raw)) throw new Error('JSON 根节点必须为数组');
+        const { valid, errors } = validateImport(raw);
+        if (errors.length) errEl.textContent = `校验发现 ${errors.length} 处错误（${errors.slice(0, 2).join('；')}）`;
+        if (!valid.length) return;
+        const exist = new Set(servers.map(s => s.host));
+        const dup = valid.filter(v => exist.has(v.host)).length;
+        pendingImportRows = valid;
+        sumEl.innerHTML = `预检通过 <strong>${valid.length}</strong> 台目标（重名 <strong>${dup}</strong> 台），导入后状态为<strong>待检测</strong>，可点“立即全量巡检”采集指标。`;
+        prevEl.innerHTML = `<table><thead><tr><th>主机名</th><th>IP / 地址</th><th>种类/厂商</th><th>采集</th><th>SSH 参数</th></tr></thead><tbody>${
+          valid.slice(0, 8).map(r => `<tr><td class="mono">${r.host}</td><td class="mono">${r.address}</td><td>${r.type}/${r.vendor}</td><td class="mono">${r.collectorType}</td><td class="mono">${r.collectorType === 'ssh' ? `${r.sshUser}@:${r.sshPort} [${r.sshCredentialRef || '-'}]` : '-'}</td></tr>`).join('')
+        }</tbody></table>`;
+        prevEl.style.display = 'block';
+        btn.disabled = false;
+      } catch (err) {
+        errEl.textContent = '解析失败：' + err.message;
+      }
+    });
+
+    document.getElementById('btn-import-commit').addEventListener('click', () => {
+      if (!checkWritePermission('IMPORT_TARGETS')) { dlgImport.close(); return; }
+      const policy = document.getElementById('import-conflict-policy').value;
+      let added = 0, updated = 0, skipped = 0;
+      pendingImportRows.forEach(r => {
+        const idx = servers.findIndex(s => s.host === r.host);
+        if (idx >= 0) {
+          if (policy === 'overwrite') { servers[idx] = { ...servers[idx], ...r }; updated++; }
+          else skipped++;
+        } else {
+          servers.unshift({ id: nextId++, ...r, memTotal: null, memFree: null, cores: null, cpu: null, probeStatus: 'PENDING', lastCheckedAt: '', probeError: '' });
+          added++;
+        }
+      });
+      const opId = makeOpId();
+      audits.unshift({ opId, time: nowStr(), actor: 'admin', action: 'IMPORT_TARGETS', code: 200, detail: `导入目标：新增 ${added}、覆盖 ${updated}、跳过 ${skipped}` });
+      dlgImport.close();
+      showToast('ok', `[200 OK · ${opId}] 已导入：新增 ${added} 台（待检测）、覆盖 ${updated}、跳过 ${skipped}。点击“立即全量巡检”即可采集指标。`);
+      renderAll();
+    });
+
+    // 登记 / 编辑目标弹窗
+    const dlgServer = document.getElementById('dlg-server');
+    const colSel = document.getElementById('f-collector');
+    function syncSshFields() {
+      document.getElementById('ssh-fields').style.display = colSel.value === 'ssh' ? 'grid' : 'none';
+    }
+    colSel.addEventListener('change', syncSshFields);
+
+    function openServerDialog(item) {
+      if (!checkWritePermission(item ? 'UPDATE_TARGET' : 'CREATE_TARGET')) return;
+      document.getElementById('f-err').textContent = '';
+      document.getElementById('dlg-server-title').textContent = item ? `编辑目标：${item.host}` : '登记目标服务器';
+      document.getElementById('f-id').value = item ? item.id : '';
+      document.getElementById('f-host').value = item ? item.host : '';
+      document.getElementById('f-address').value = item ? item.address : '';
+      document.getElementById('f-type').value = item ? item.type : '物理机';
+      document.getElementById('f-vendor').value = item ? item.vendor : '戴尔 Dell';
+      colSel.value = item ? item.collectorType : 'ssh';
+      document.getElementById('f-ssh-port').value = item?.sshPort || 22;
+      document.getElementById('f-ssh-user').value = item?.sshUser || 'ops-ro';
+      document.getElementById('f-ssh-cred').value = item?.sshCredentialRef || 'prod-ro-key';
+      syncSshFields();
+      dlgServer.showModal();
+    }
+    document.getElementById('btn-add').addEventListener('click', () => openServerDialog(null));
+    document.getElementById('dlg-server-x').addEventListener('click', () => dlgServer.close());
+    document.getElementById('dlg-server-cancel').addEventListener('click', () => dlgServer.close());
+
+    document.getElementById('server-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const idVal = document.getElementById('f-id').value;
+      const host = document.getElementById('f-host').value.trim();
+      const address = document.getElementById('f-address').value.trim();
+      const type = document.getElementById('f-type').value;
+      const vendor = document.getElementById('f-vendor').value;
+      const collectorType = colSel.value;
+      const sshPort = collectorType === 'ssh' ? Number(document.getElementById('f-ssh-port').value) : null;
+      const sshUser = collectorType === 'ssh' ? document.getElementById('f-ssh-user').value.trim() : '';
+      const sshCredentialRef = collectorType === 'ssh' ? document.getElementById('f-ssh-cred').value.trim() : '';
+
+      if (servers.find(s => s.host === host && String(s.id) !== idVal)) {
+        document.getElementById('f-err').textContent = `主机名 ${host} 已存在`;
+        return;
+      }
+      const opId = makeOpId();
+      if (idVal) {
+        const idx = servers.findIndex(s => String(s.id) === idVal);
+        servers[idx] = { ...servers[idx], host, address, type, vendor, collectorType, sshPort, sshUser, sshCredentialRef };
+        audits.unshift({ opId, time: nowStr(), actor: 'admin', action: 'UPDATE_TARGET', code: 200, detail: `更新目标 ${host} (${address})` });
+        showToast('ok', `[200 OK · ${opId}] 已更新目标 ${host}。`);
+      } else {
+        servers.unshift({ id: nextId++, host, address, type, vendor, collectorType, sshPort, sshUser, sshCredentialRef, memTotal: null, memFree: null, cores: null, cpu: null, probeStatus: 'PENDING', lastCheckedAt: '', probeError: '' });
+        audits.unshift({ opId, time: nowStr(), actor: 'admin', action: 'CREATE_TARGET', code: 201, detail: `登记目标 ${host} (${address} / ${collectorType})` });
+        showToast('ok', `[201 Created · ${opId}] 已登记 ${host}（状态：待检测），点击“检测”或“立即全量巡检”采集指标。`);
+      }
+      dlgServer.close();
+      renderAll();
+    });
+
+    // 立即全量巡检 & 单台检测
+    document.getElementById('btn-inspect-all').addEventListener('click', () => {
+      if (!checkWritePermission('INSPECT_ALL')) return;
+      let ok = 0, fail = 0;
+      servers.forEach(s => { if (runProbeOne(s)) ok++; else fail++; });
+      const opId = makeOpId();
+      audits.unshift({ opId, time: nowStr(), actor: 'admin', action: 'INSPECT_ALL', code: 200, detail: `全量巡检完成：成功 ${ok} 台，失败/超时 ${fail} 台（单台故障已隔离）` });
+      showToast(fail ? 'warn' : 'ok', `[200 OK · ${opId}] 全量巡检完成：成功 ${ok} 台，异常隔离 ${fail} 台，指标与时间已刷新。`);
+      renderAll();
+    });
+
+    const dlgConfirm = document.getElementById('dlg-confirm');
+    document.getElementById('confirm-x').addEventListener('click', () => dlgConfirm.close());
+    document.getElementById('confirm-cancel').addEventListener('click', () => dlgConfirm.close());
+    document.getElementById('confirm-ok').addEventListener('click', () => { dlgConfirm.close(); if (confirmAction) confirmAction(); });
+
+    document.getElementById('server-tbody').addEventListener('click', e => {
+      const probeId = e.target.dataset.probe;
+      const editId = e.target.dataset.edit;
+      const delId = e.target.dataset.del;
+      if (probeId) {
+        if (!checkWritePermission('INSPECT_ONE')) return;
+        const target = servers.find(s => String(s.id) === probeId);
+        const ok = runProbeOne(target);
+        const opId = makeOpId();
+        audits.unshift({ opId, time: nowStr(), actor: 'admin', action: 'INSPECT_ONE', code: ok ? 200 : 504, detail: `单台巡检 ${target.host} (${target.address}): ${ok ? '成功' : target.probeError}` });
+        showToast(ok ? 'ok' : 'err', ok ? `[200 OK · ${opId}] ${target.host} 检测完成：CPU ${target.cpu}%，可用内存 ${target.memFree}/${target.memTotal} G` : `[504 · ${opId}] ${target.host} ${target.probeError}`);
+        renderAll();
+      } else if (editId) {
+        openServerDialog(servers.find(s => String(s.id) === editId));
+      } else if (delId) {
+        if (!checkWritePermission('DELETE_TARGET')) return;
+        const target = servers.find(s => String(s.id) === delId);
+        document.getElementById('confirm-title').textContent = '确认删除目标服务器';
+        document.getElementById('confirm-desc').textContent = '取消则不发出写请求，确认后将移除目标并记审计：';
+        document.getElementById('confirm-detail').textContent = `${target.host} (${target.address}) ｜ ${target.type} / ${target.vendor} ｜ ${target.collectorType}`;
+        confirmAction = () => {
+          const opId = makeOpId();
+          servers = servers.filter(s => s.id !== target.id);
+          audits.unshift({ opId, time: nowStr(), actor: 'admin', action: 'DELETE_TARGET', code: 200, detail: `删除 ${target.host}` });
+          showToast('ok', `[200 OK · ${opId}] 已删除目标 ${target.host}。`);
+          renderAll();
+        };
+        dlgConfirm.showModal();
+      }
+    });
+
+    // 筛选、Tab、时间选择器与推送
+    ['filter-q', 'filter-type', 'filter-vendor', 'filter-collector', 'filter-alert-only'].forEach(id => {
+      document.getElementById(id).addEventListener('input', renderAll);
+      document.getElementById(id).addEventListener('change', renderAll);
+    });
+    document.getElementById('toast-close').addEventListener('click', () => document.getElementById('toast').classList.remove('show'));
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        ['outbox', 'audit'].forEach(k => { document.getElementById('tab-' + k).style.display = k === tab.dataset.tab ? 'block' : 'none'; });
+      });
+    });
+
+    // 4x6 小时 + 2x6 分钟弹层时间选择器
+    const tpWrap = document.getElementById('tp-wrap');
+    const tpTrigger = document.getElementById('tp-trigger');
+    const tpPopover = document.getElementById('tp-popover');
+    const tpHours = document.getElementById('tp-hours');
+    const tpMins = document.getElementById('tp-mins');
+    const timeHidden = document.getElementById('sched-time');
+    let pickedH = '09', pickedM = '00';
+    for (let h = 0; h < 24; h++) { const v = String(h).padStart(2, '0'); tpHours.insertAdjacentHTML('beforeend', `<button class="tp-cell" type="button" data-h="${v}">${v}</button>`); }
+    for (let m = 0; m < 60; m += 5) { const v = String(m).padStart(2, '0'); tpMins.insertAdjacentHTML('beforeend', `<button class="tp-cell" type="button" data-m="${v}">${v}</button>`); }
+    function renderTP() {
+      const hhmm = `${pickedH}:${pickedM}`;
+      timeHidden.value = hhmm;
+      document.getElementById('tp-display').textContent = `${pickedH} : ${pickedM}`;
+      document.getElementById('tp-cur-h').textContent = `${pickedH} 时`;
+      document.getElementById('tp-cur-m').textContent = `${pickedM} 分`;
+      tpHours.querySelectorAll('.tp-cell').forEach(b => b.classList.toggle('active', b.dataset.h === pickedH));
+      tpMins.querySelectorAll('.tp-cell').forEach(b => b.classList.toggle('active', b.dataset.m === pickedM));
+      document.querySelectorAll('.tp-preset').forEach(b => b.classList.toggle('active', b.dataset.time === hhmm));
+    }
+    const setOpen = open => { tpPopover.classList.toggle('open', open); tpTrigger.setAttribute('aria-expanded', String(open)); };
+    tpTrigger.addEventListener('click', () => setOpen(!tpPopover.classList.contains('open')));
+    tpHours.addEventListener('click', e => { if (e.target.dataset.h) { pickedH = e.target.dataset.h; renderTP(); } });
+    tpMins.addEventListener('click', e => { if (e.target.dataset.m) { pickedM = e.target.dataset.m; renderTP(); setOpen(false); } });
+    document.querySelectorAll('.tp-preset').forEach(b => b.addEventListener('click', () => { [pickedH, pickedM] = b.dataset.time.split(':'); renderTP(); setOpen(false); }));
+    document.addEventListener('click', e => { if (!tpWrap.contains(e.target)) setOpen(false); });
+    renderTP();
+
+    document.getElementById('btn-download-md').addEventListener('click', () => {
+      downloadBlob(`ops-inspection-${new Date().toISOString().slice(0, 10)}.md`, buildMarkdown(), 'text/markdown;charset=utf-8');
+      showToast('ok', '已下载当前 Markdown 巡检报告。');
+    });
+
+    document.getElementById('sched-form').addEventListener('submit', e => {
+      e.preventDefault();
+      if (!checkWritePermission('UPDATE_SCHEDULE')) return;
+      const emails = document.getElementById('sched-emails').value.split(',').map(s => s.trim()).filter(Boolean);
+      const bad = emails.find(m => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m));
+      if (!emails.length || bad) return showToast('err', `邮箱格式不合法：${bad || '不能为空'}`);
+      schedule.enabled = document.getElementById('sched-enabled').checked;
+      schedule.time = timeHidden.value;
+      schedule.emails = emails;
+      const opId = makeOpId();
+      audits.unshift({ opId, time: nowStr(), actor: 'admin', action: 'UPDATE_SCHEDULE', code: 200, detail: `${schedule.enabled ? '启用' : '停用'} 每日 ${schedule.time} 推送` });
+      showToast('ok', `[200 OK · ${opId}] 定时配置已保存。`);
+      renderAll();
+    });
+
+    document.getElementById('btn-push-now').addEventListener('click', () => {
+      if (!checkWritePermission('PUSH_REPORT_NOW')) return;
+      const md = buildMarkdown();
+      document.getElementById('confirm-title').textContent = '确认立即推送最新巡检报告';
+      document.getElementById('confirm-desc').textContent = `收件人：${schedule.emails.join(', ')}（演练模式：${document.getElementById('smtp-sim').selectedOptions[0].textContent}）`;
+      document.getElementById('confirm-detail').textContent = md;
+      confirmAction = () => {
+        const mode = document.getElementById('smtp-sim').value;
+        const opId = makeOpId();
+        if (mode === 'conflict') {
+          audits.unshift({ opId, time: nowStr(), actor: 'admin', action: 'PUSH_REPORT_NOW', code: 409, detail: '并发推送防重锁拦截' });
+          showToast('warn', `[409 Conflict · ${opId}] 已有推送进行中，本次已拦截。`);
+          return renderLogs();
+        }
+        if (mode === 'timeout') {
+          audits.unshift({ opId, time: nowStr(), actor: 'admin', action: 'PUSH_REPORT_NOW', code: 504, detail: 'SMTP 超时，结果未知，禁止自动重试' });
+          showToast('err', `[504 Gateway Timeout · ${opId}] SMTP 超时，结果未知，已禁止自动重试。`);
+          return renderLogs();
+        }
+        outbox.unshift({ opId, time: nowStr(), status: '200 SENT (mock)', recipients: schedule.emails.join(', '), body: md });
+        audits.unshift({ opId, time: nowStr(), actor: 'admin', action: 'PUSH_REPORT_NOW', code: 200, detail: `手动推送成功（${schedule.emails.length} 个收件人）` });
+        showToast('ok', `[200 OK · ${opId}] 最新巡检 Markdown 报告已送达下方模拟收件箱。`);
+        renderLogs();
+      };
+      dlgConfirm.showModal();
+    });
+
+    switchRoute(window.location.hash.replace(/^#\/?/, '') || 'servers');
+    renderAll();
+  </script>
+</body>
+</html>

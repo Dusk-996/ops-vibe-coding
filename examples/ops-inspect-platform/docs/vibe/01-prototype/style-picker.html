@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>智能巡检系统 — 原型视觉风格筛选（3 套真实 CSS 样例）</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bar-bg: #111827;
+    --bar-fg: #f9fafb;
+    --bar-muted: #9ca3af;
+    --bar-border: #374151;
+    --font-sans: "PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, -apple-system, sans-serif;
+    --font-mono: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+  }
+  body {
+    font-family: var(--font-sans);
+    background: #0b1120;
+    color: #e2e8f0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  /* 顶部风格切换器（不属于最终原型，仅用于筛选对比） */
+  .picker-bar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--bar-bg);
+    border-bottom: 1px solid var(--bar-border);
+    padding: 12px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .picker-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .picker-title strong { font-size: 15px; color: var(--bar-fg); }
+  .picker-title span { font-size: 12px; color: var(--bar-muted); }
+  .picker-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .tab-btn {
+    border: 1px solid #4b5563;
+    background: #1f2937;
+    color: #e5e7eb;
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 150ms, border-color 150ms, color 150ms;
+  }
+  .tab-btn:hover { background: #374151; }
+  .tab-btn.active {
+    background: #2563eb;
+    border-color: #3b82f6;
+    color: #ffffff;
+  }
+  .tab-btn:focus-visible { outline: 2px solid #93c5fd; outline-offset: 2px; }
+
+  .stage-wrap {
+    flex: 1;
+    padding: 20px;
+    max-width: 1520px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  /* 对比视图：3 列缩略对比 */
+  .compare-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 18px;
+  }
+  .compare-card {
+    border: 1px solid #334155;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #111827;
+    display: flex;
+    flex-direction: column;
+  }
+  .compare-head {
+    padding: 12px 16px;
+    background: #1e293b;
+    border-bottom: 1px solid #334155;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .compare-head h2 { font-size: 14px; color: #f8fafc; }
+  .compare-head p { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+  .zoom-btn {
+    border: 1px solid #475569;
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .zoom-btn:hover { background: #2563eb; border-color: #3b82f6; }
+  .compare-preview {
+    padding: 14px;
+    flex: 1;
+  }
+
+  /* =========================================================
+     共用 Mock 业务面板 DOM 结构，由外层 .theme-* 彻底改变风格
+     ========================================================= */
+  .app-shell {
+    border-radius: 10px;
+    overflow: hidden;
+    transition: all 200ms ease;
+  }
+  .app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 14px 20px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .brand-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 7px;
+    display: grid;
+    place-items: center;
+  }
+  .brand h3 { font-size: 16px; line-height: 1.2; }
+  .brand small { display: block; font-size: 12px; margin-top: 2px; }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .role-badge {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-weight: 500;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: opacity 150ms, background 150ms;
+  }
+  .btn:hover { opacity: 0.9; }
+  .app-body { padding: 18px 20px; display: grid; gap: 16px; }
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .compare-grid .kpi-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi-card { padding: 14px 16px; border-radius: 8px; }
+  .kpi-label { font-size: 12px; }
+  .kpi-value {
+    font-size: 24px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    margin: 6px 0 4px;
+  }
+  .kpi-sub { font-size: 12px; }
+
+  .main-split {
+    display: grid;
+    grid-template-columns: 1.65fr 1fr;
+    gap: 16px;
+  }
+  .compare-grid .main-split { grid-template-columns: 1fr; }
+
+  .panel { border-radius: 8px; overflow: hidden; }
+  .panel-head {
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .panel-head h4 { font-size: 14px; font-weight: 600; }
+  .panel-body { padding: 12px 16px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 9px 10px; }
+  .mono { font-family: var(--font-mono); font-size: 12px; }
+  .pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .meter {
+    height: 6px;
+    width: 72px;
+    border-radius: 99px;
+    overflow: hidden;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+  .meter > i { display: block; height: 100%; border-radius: 99px; }
+
+  .sched-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    font-size: 13px;
+  }
+  .md-preview {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.55;
+    padding: 12px;
+    border-radius: 6px;
+    white-space: pre-wrap;
+    overflow-x: auto;
+  }
+
+  /* =========================================================
+     风格 A：暗夜 NOC 运维监控风（Dark Ops Telemetry）
+     ========================================================= */
+  .theme-a {
+    background: #0f172a;
+    color: #f1f5f9;
+    border: 1px solid #334155;
+  }
+  .theme-a .app-header { background: #162033; border-bottom: 1px solid #334155; }
+  .theme-a .brand-icon { background: #22c55e22; color: #22c55e; border: 1px solid #22c55e66; }
+  .theme-a .brand small { color: #94a3b8; }
+  .theme-a .role-badge { background: #1e293b; color: #38bdf8; border: 1px solid #334155; }
+  .theme-a .btn-primary { background: #22c55e; color: #052e16; font-weight: 700; }
+  .theme-a .btn-ghost { background: #1e293b; color: #e2e8f0; border-color: #475569; }
+  .theme-a .kpi-card { background: #1b2336; border: 1px solid #334155; }
+  .theme-a .kpi-label, .theme-a .kpi-sub { color: #94a3b8; }
+  .theme-a .kpi-warn { color: #f59e0b; }
+  .theme-a .kpi-ok { color: #22c55e; }
+  .theme-a .panel { background: #1b2336; border: 1px solid #334155; }
+  .theme-a .panel-head { border-bottom: 1px solid #273449; }
+  .theme-a th { color: #94a3b8; font-weight: 500; border-bottom: 1px solid #334155; }
+  .theme-a td { border-bottom: 1px solid #243045; }
+  .theme-a tr:last-child td { border-bottom: none; }
+  .theme-a .pill-ok { background: #14532d; color: #86efac; }
+  .theme-a .pill-warn { background: #78350f; color: #fde68a; }
+  .theme-a .pill-crit { background: #7f1d1d; color: #fecaca; }
+  .theme-a .meter { background: #334155; }
+  .theme-a .sched-row { background: #0f172a; border: 1px solid #334155; }
+  .theme-a .md-preview { background: #0b1220; color: #cbd5e1; border: 1px solid #273449; }
+
+  /* =========================================================
+     风格 B：清爽企业浅色控制台（Enterprise Clean / Fluent 2）
+     ========================================================= */
+  .theme-b {
+    background: #f8fafc;
+    color: #0f172a;
+    border: 1px solid #cbd5e1;
+  }
+  .theme-b .app-header { background: #ffffff; border-bottom: 1px solid #e2e8f0; }
+  .theme-b .brand-icon { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+  .theme-b .brand small { color: #64748b; }
+  .theme-b .role-badge { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+  .theme-b .btn-primary { background: #2563eb; color: #ffffff; }
+  .theme-b .btn-ghost { background: #ffffff; color: #334155; border-color: #cbd5e1; }
+  .theme-b .kpi-card { background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); }
+  .theme-b .kpi-label, .theme-b .kpi-sub { color: #64748b; }
+  .theme-b .kpi-warn { color: #d97706; }
+  .theme-b .kpi-ok { color: #16a34a; }
+  .theme-b .panel { background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); }
+  .theme-b .panel-head { border-bottom: 1px solid #f1f5f9; }
+  .theme-b th { color: #475569; font-weight: 600; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+  .theme-b td { border-bottom: 1px solid #f1f5f9; }
+  .theme-b tr:last-child td { border-bottom: none; }
+  .theme-b .pill-ok { background: #dcfce7; color: #166534; }
+  .theme-b .pill-warn { background: #fef3c7; color: #92400e; }
+  .theme-b .pill-crit { background: #fee2e2; color: #991b1b; }
+  .theme-b .meter { background: #e2e8f0; }
+  .theme-b .sched-row { background: #f8fafc; border: 1px solid #e2e8f0; }
+  .theme-b .md-preview { background: #f1f5f9; color: #1e293b; border: 1px solid #e2e8f0; }
+
+  /* =========================================================
+     风格 C：高密度极简表格工程风（Swiss Data-Dense Console）
+     ========================================================= */
+  .theme-c {
+    background: #ffffff;
+    color: #111827;
+    border: 2px solid #111827;
+    border-radius: 2px;
+  }
+  .theme-c .app-header { background: #f3f4f6; border-bottom: 2px solid #111827; padding: 10px 16px; }
+  .theme-c .brand-icon { background: #111827; color: #ffffff; border-radius: 2px; }
+  .theme-c .brand small { color: #4b5563; }
+  .theme-c .role-badge { background: #ffffff; color: #111827; border: 1px solid #111827; border-radius: 2px; }
+  .theme-c .btn { border-radius: 2px; padding: 5px 12px; font-size: 12px; }
+  .theme-c .btn-primary { background: #111827; color: #ffffff; }
+  .theme-c .btn-ghost { background: #ffffff; color: #111827; border-color: #111827; }
+  .theme-c .app-body { padding: 12px 16px; gap: 10px; }
+  .theme-c .kpi-card { background: #fafafa; border: 1px solid #d1d5db; border-radius: 2px; padding: 10px 12px; }
+  .theme-c .kpi-value { font-size: 20px; }
+  .theme-c .kpi-label, .theme-c .kpi-sub { color: #4b5563; }
+  .theme-c .kpi-warn { color: #b45309; }
+  .theme-c .kpi-ok { color: #047857; }
+  .theme-c .panel { background: #ffffff; border: 1px solid #9ca3af; border-radius: 2px; }
+  .theme-c .panel-head { background: #f9fafb; border-bottom: 1px solid #9ca3af; padding: 8px 12px; }
+  .theme-c .panel-body { padding: 8px 12px; }
+  .theme-c th, .theme-c td { padding: 6px 8px; font-size: 12px; }
+  .theme-c th { background: #f3f4f6; color: #111827; border-bottom: 1px solid #9ca3af; font-weight: 700; }
+  .theme-c td { border-bottom: 1px solid #e5e7eb; }
+  .theme-c .pill { border-radius: 2px; border: 1px solid currentColor; background: transparent; }
+  .theme-c .pill-ok { color: #047857; }
+  .theme-c .pill-warn { color: #b45309; }
+  .theme-c .pill-crit { color: #b91c1c; }
+  .theme-c .meter { background: #e5e7eb; border-radius: 1px; height: 5px; }
+  .theme-c .meter > i { border-radius: 1px; }
+  .theme-c .sched-row { background: #f9fafb; border: 1px solid #d1d5db; border-radius: 2px; padding: 8px 10px; }
+  .theme-c .md-preview { background: #f9fafb; color: #111827; border: 1px solid #d1d5db; border-radius: 2px; padding: 9px; font-size: 11px; }
+
+  .single-note {
+    margin-bottom: 14px;
+    padding: 12px 16px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 13px;
+  }
+  .single-note strong { color: #f8fafc; }
+  .single-note span { color: #94a3b8; }
+</style>
+</head>
+<body>
+  <header class="picker-bar">
+    <div class="picker-title">
+      <strong>智能巡检系统 · P1b 原型风格筛选</strong>
+      <span>同一套真实业务 Mock，点选切换全屏效果，选定后直接生成完整交互原型</span>
+    </div>
+    <nav class="picker-tabs" aria-label="风格切换">
+      <button class="tab-btn active" data-view="compare">3 套并排对比</button>
+      <button class="tab-btn" data-view="a">全屏看 · 风格 A（暗夜 NOC）</button>
+      <button class="tab-btn" data-view="b">全屏看 · 风格 B（清爽企业浅色）</button>
+      <button class="tab-btn" data-view="c">全屏看 · 风格 C（高密度极简表格）</button>
+    </nav>
+  </header>
+
+  <main class="stage-wrap" id="stage"></main>
+
+  <script>
+    const styles = {
+      a: {
+        cls: 'theme-a',
+        name: '风格 A · 暗夜 NOC 运维监控风',
+        desc: '深石板蓝底 + 信号绿/琥珀/告警红，夜间值班与大屏盯盘最护眼，水位告警一眼可见'
+      },
+      b: {
+        cls: 'theme-b',
+        name: '风格 B · 清爽企业浅色控制台',
+        desc: '微灰画布 + 纯白卡片 + 克制科技蓝，白天录入资产、改定时规则、给团队/领导演示最通用'
+      },
+      c: {
+        cls: 'theme-c',
+        name: '风格 C · 高密度极简工程表格风',
+        desc: '瑞士细线栅格 + 紧凑行高 + 零装饰噪音，服务器数量多、偏重高频表格检索与同屏信息密度'
+      }
+    };
+
+    const mockRows = [
+      { host: 'prod-k8s-node-01', type: '物理机', vendor: '戴尔 Dell', mem: '256G / 剩 42G', cpu: 84, lvl: 'crit', status: '高负载' },
+      { host: 'prod-db-master-01', type: '物理机', vendor: '华为 TaiShan', mem: '512G / 剩 168G', cpu: 62, lvl: 'warn', status: '关注' },
+      { host: 'app-worker-04', type: '虚拟机', vendor: '阿里云 ECS', mem: '64G / 剩 39G', cpu: 28, lvl: 'ok', status: '正常' },
+      { host: 'edge-gw-02', type: '容器节点', vendor: '浪潮 Inspur', mem: '128G / 剩 88G', cpu: 31, lvl: 'ok', status: '正常' }
+    ];
+
+    function barColor(lvl) {
+      if (lvl === 'crit') return '#ef4444';
+      if (lvl === 'warn') return '#f59e0b';
+      return '#22c55e';
+    }
+
+    function renderPrototype(themeKey) {
+      const cfg = styles[themeKey];
+      const rowsHtml = mockRows.map(r => `
+        <tr>
+          <td class="mono"><strong>${r.host}</strong></td>
+          <td>${r.type}</td>
+          <td>${r.vendor}</td>
+          <td class="mono">${r.mem}</td>
+          <td class="mono">
+            <span class="meter"><i style="width:${r.cpu}%;background:${barColor(r.lvl)}"></i></span>${r.cpu}%
+          </td>
+          <td><span class="pill pill-${r.lvl}">${r.status}</span></td>
+        </tr>
+      `).join('');
+
+      const mdText = `# 服务器每日巡检报告 (2026-11-23 09:00)
+- 服务器总数：24 台（物理机 10 / 虚拟机 11 / 容器节点 3）
+- 厂商分布：戴尔 9 · 华为 7 · 阿里云 5 · 浪潮 3
+- 内存汇总：总计 3,840 GB ｜ 剩余 1,290 GB（33.6%）
+- 高负载告警：1 台（prod-k8s-node-01 CPU 84%，剩余内存 42G）`;
+
+      return `
+        <div class="app-shell ${cfg.cls}">
+          <div class="app-header">
+            <div class="brand">
+              <div class="brand-icon" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="3" width="20" height="7" rx="1"></rect>
+                  <rect x="2" y="14" width="20" height="7" rx="1"></rect>
+                  <line x1="6" y1="6.5" x2="6.01" y2="6.5"></line>
+                  <line x1="6" y1="17.5" x2="6.01" y2="17.5"></line>
+                </svg>
+              </div>
+              <div>
+                <h3>智能服务器巡检系统</h3>
+                <small>资产登记统计 · 每日 Markdown 邮件推送</small>
+              </div>
+            </div>
+            <div class="header-right">
+              <span class="role-badge">角色：admin</span>
+              <button class="btn btn-ghost" type="button">+ 登记服务器</button>
+              <button class="btn btn-primary" type="button">立即推送报告</button>
+            </div>
+          </div>
+
+          <div class="app-body">
+            <section class="kpi-row">
+              <div class="kpi-card">
+                <div class="kpi-label">已登记服务器</div>
+                <div class="kpi-value">24</div>
+                <div class="kpi-sub">物理 10 · 虚机 11 · 容器 3</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">厂商覆盖</div>
+                <div class="kpi-value">4 类</div>
+                <div class="kpi-sub">戴尔 / 华为 / 阿里云 / 浪潮</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">剩余总内存</div>
+                <div class="kpi-value kpi-ok">1,290 G</div>
+                <div class="kpi-sub">总计 3,840 G（余量 33.6%）</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">高负载节点</div>
+                <div class="kpi-value kpi-warn">1 台</div>
+                <div class="kpi-sub">CPU &ge; 80% 或余量 &lt; 20%</div>
+              </div>
+            </section>
+
+            <div class="main-split">
+              <section class="panel">
+                <div class="panel-head">
+                  <h4>服务器资源台账（Mock 样例）</h4>
+                  <span class="mono" style="font-size:12px;opacity:.75">筛选：全部种类 / 全部厂商</span>
+                </div>
+                <div class="panel-body" style="padding:0;overflow-x:auto">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>主机名</th>
+                        <th>种类</th>
+                        <th>厂商</th>
+                        <th>总内存 / 剩余</th>
+                        <th>CPU</th>
+                        <th>状态</th>
+                      </tr>
+                    </thead>
+                    <tbody>${rowsHtml}</tbody>
+                  </table>
+                </div>
+              </section>
+
+              <section class="panel">
+                <div class="panel-head">
+                  <h4>定时推送 &amp; Markdown 预览</h4>
+                  <span class="pill pill-ok">每日 09:00 已启用</span>
+                </div>
+                <div class="panel-body">
+                  <div class="sched-row">
+                    <span>收件人：<strong>ops-team@corp.local</strong></span>
+                    <span class="mono">SMTP：模拟模式</span>
+                  </div>
+                  <div class="md-preview">${mdText}</div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    const stage = document.getElementById('stage');
+    const buttons = document.querySelectorAll('.tab-btn');
+
+    function renderView(view) {
+      buttons.forEach(b => b.classList.toggle('active', b.dataset.view === view));
+      if (view === 'compare') {
+        stage.innerHTML = `<div class="compare-grid">${
+          ['a', 'b', 'c'].map(k => `
+            <article class="compare-card">
+              <div class="compare-head">
+                <div>
+                  <h2>${styles[k].name}</h2>
+                  <p>${styles[k].desc}</p>
+                </div>
+                <button class="zoom-btn" type="button" data-zoom="${k}">全屏查看</button>
+              </div>
+              <div class="compare-preview">${renderPrototype(k)}</div>
+            </article>
+          `).join('')
+        }</div>`;
+        stage.querySelectorAll('[data-zoom]').forEach(btn => {
+          btn.addEventListener('click', () => renderView(btn.dataset.zoom));
+        });
+      } else {
+        const cfg = styles[view];
+        stage.innerHTML = `
+          <div class="single-note">
+            <div><strong>${cfg.name}</strong> <span>— ${cfg.desc}</span></div>
+            <button class="zoom-btn" type="button" id="back-compare">返回 3 套对比</button>
+          </div>
+          ${renderPrototype(view)}
+        `;
+        document.getElementById('back-compare').addEventListener('click', () => renderView('compare'));
+      }
+    }
+
+    buttons.forEach(btn => btn.addEventListener('click', () => renderView(btn.dataset.view)));
+    renderView('compare');
+  </script>
+</body>
+</html>

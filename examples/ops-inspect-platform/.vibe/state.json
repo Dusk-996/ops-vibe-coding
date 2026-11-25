@@ -1,0 +1,127 @@
+{
+  "schema_version": "3.3",
+  "project_name": "ops-inspect-demo",
+  "mode": "mutating",
+  "selected_style": "C-swiss-data-dense-refactoring-ui",
+  "core_test_pattern": "collect|inspect|probe",
+  "initialized_at": "2026-11-23T23:52:54+08:00",
+  "current_stage": "released",
+  "max_retries": 3,
+  "agents_guard_sha256": "142409c16e10bae5f86214ba1e4516f9e0fe43a94cbe0f20e9634dffe2979521",
+  "commands": {
+    "frontend_build": "npm --prefix frontend run build",
+    "frontend_test": "",
+    "backend_test": "python -m pytest -c backend/pytest.ini backend/tests -v",
+    "security_test": ""
+  },
+  "gates": {
+    "p1": {
+      "status": "passed",
+      "retries": 0,
+      "last_checked_at": "2026-11-25T22:49:32+08:00",
+      "findings": [],
+      "approved": true,
+      "approved_at": "2026-11-23T23:53:58+08:00",
+      "approved_by": "user",
+      "note": "P1 Rev 4 原型已验收"
+    },
+    "p2": {
+      "status": "passed",
+      "retries": 0,
+      "last_checked_at": "2026-11-25T22:49:32+08:00",
+      "findings": [],
+      "approved": true,
+      "approved_at": "2026-11-23T23:53:58+08:00",
+      "approved_by": "user",
+      "note": "P2 技术栈与核心采集机制已验收"
+    },
+    "p3": {
+      "status": "passed",
+      "retries": 0,
+      "last_checked_at": "2026-11-25T22:49:32+08:00",
+      "findings": [],
+      "approved": true,
+      "approved_at": "2026-11-24T00:02:16+08:00",
+      "approved_by": "user",
+      "note": "P3 规格与空骨架已验收，进入 P4a 前端实机验收"
+    },
+    "p4a": {
+      "status": "passed",
+      "retries": 0,
+      "last_checked_at": "2026-11-25T22:41:21+08:00",
+      "findings": [],
+      "approved": true,
+      "approved_at": "2026-11-25T21:48:34+08:00",
+      "approved_by": "user",
+      "note": "P4a 前端实机验收通过，进入 P4b 后端开发",
+      "command_results": [
+        {
+          "command": "npm --prefix frontend run build",
+          "cwd": "J:/gmini/01/demo",
+          "returncode": 0,
+          "passed": true,
+          "stdout_tail": "\n> ops-inspect-frontend@1.0.0 build\n> vite build\n\n\u001b[36mvite v6.4.6 \u001b[32mbuilding for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 43 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[32mindex.html                 \u001b[39m\u001b[1m\u001b[2m  0.42 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:  0.32 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[35massets/index-DHTpgNpi.css  \u001b[39m\u001b[1m\u001b[2m 22.34 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip:  4.81 kB\u001b[22m\n\u001b[2mdist/\u001b[22m\u001b[36massets/index-Brz7JFZL.js   \u001b[39m\u001b[1m\u001b[2m230.47 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip: 71.45 kB\u001b[22m\n\u001b[32m✓ built in 517ms\u001b[39m\n",
+          "stderr_tail": "",
+          "name": "frontend_build"
+        }
+      ]
+    },
+    "p4b": {
+      "status": "passed",
+      "retries": 0,
+      "last_checked_at": "2026-11-25T22:31:09+08:00",
+      "findings": [],
+      "approved": true,
+      "approved_at": "2026-11-25T22:42:57+08:00",
+      "approved_by": "user",
+      "note": "P4b 后端真实采集、多发件箱加密存档、QQ 真实发信与前端布局精修验收通过",
+      "command_results": [
+        {
+          "command": "python -m pytest -c backend/pytest.ini backend/tests -v",
+          "cwd": "J:/gmini/01/demo",
+          "returncode": 0,
+          "passed": true,
+          "stdout_tail": "==== test session starts =============================\nplatform win32 -- Python 3.11.9, pytest-9.0.3, pluggy-1.6.0 -- D:\\Python\\python.exe\ncachedir: .pytest_cache\nrootdir: J:\\gmini\\01\\demo\\backend\nconfigfile: pytest.ini\nplugins: anyio-4.13.0\ncollecting ... collected 13 items\n\nbackend\\tests\\test_api.py::test_local_collect_real_system_metrics PASSED [  7%]\nbackend\\tests\\test_api.py::test_ssh_collect_readonly_whitelist_and_timeout_no_retry PASSED [ 15%]\nbackend\\tests\\test_api.py::test_inspect_all_concurrent_timeout_isolation PASSED [ 23%]\nbackend\\tests\\test_api.py::test_import_preview_commit_and_csv_formula_escape PASSED [ 30%]\nbackend\\tests\\test_api.py::test_security_401_unauthorized_write_blocked PASSED [ 38%]\nbackend\\tests\\test_api.py::test_security_403_viewer_forbidden_write_blocked PASSED [ 46%]\nbackend\\tests\\test_api.py::test_security_409_concurrent_push_conflict PASSED [ 53%]\nbackend\\tests\\test_api.py::test_security_504_smtp_timeout_no_retry PASSED [ 61%]\nbackend\\tests\\test_api.py::test_production_fail_fast_rejects_weak_secrets PASSED [ 69%]\nbackend\\tests\\test_api.py::test_scheduler_tick_idempotent_same_minute PASSED [ 76%]\nbackend\\tests\\test_api.py::test_smtp_web_config_encrypted_storage_and_hot_reload PASSED [ 84%]\nbackend\\tests\\test_api.py::test_smtp_multi_profiles_save_switch_and_delete PASSED [ 92%]\nbackend\\tests\\test_api.py::test_report_summary_shows_only_abnormal_details PASSED [100%]\n\n============================= 13 passed in 2.83s ==============================\n",
+          "stderr_tail": "",
+          "name": "backend_test"
+        }
+      ],
+      "scanners": [
+        {
+          "tool": "gitleaks",
+          "status": "SKIPPED",
+          "reason": "not installed"
+        },
+        {
+          "tool": "ruff",
+          "status": "SKIPPED",
+          "reason": "not installed"
+        },
+        {
+          "tool": "bandit",
+          "status": "SKIPPED",
+          "reason": "not installed"
+        },
+        {
+          "tool": "hadolint",
+          "status": "SKIPPED",
+          "reason": "not installed"
+        }
+      ],
+      "hard_scan_issues": []
+    },
+    "p5": {
+      "status": "passed",
+      "retries": 0,
+      "last_checked_at": "2026-11-25T22:59:33+08:00",
+      "findings": [],
+      "approved": true,
+      "approved_at": "2026-11-25T22:59:33+08:00",
+      "approved_by": "user",
+      "note": "端到端标杆案例终验放行",
+      "evidence_files": [
+        "docs/vibe/05-e2e.log"
+      ]
+    }
+  }
+}

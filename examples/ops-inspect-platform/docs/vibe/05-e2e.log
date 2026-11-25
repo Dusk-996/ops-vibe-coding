@@ -1,0 +1,9 @@
+[PASS] GET /health -> 200 {"status":"ok","smtp_mode":"smtp","smtp_source":"database","env":"development"}
+[PASS] POST /api/auth/login (admin) -> 200 role=admin
+[PASS] POST /api/auth/login (duskk) -> 200 role=viewer
+[PASS] POST /api/inspect/run (unauthenticated) -> 401 Unauthorized
+[PASS] POST /api/inspect/run (duskk viewer) -> 403 Forbidden
+[PASS] POST /api/inspect/1 (local real) -> 200 mem=17.2/31.9GB cpu=4.7% cores=16 status=OK
+[PASS] GET /api/reports/markdown -> 200 overview_mode=OK length=697
+[PASS] GET /api/smtp -> 200 mode=smtp saved_profiles=1 no_secret_leak=OK
+[PASS] GET http://127.0.0.1:5173/ -> 200 frontend_ready=OK

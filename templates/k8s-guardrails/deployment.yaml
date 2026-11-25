@@ -1,0 +1,72 @@
+# 生产级 Kubernetes 工作负载护栏模板（符合 vibe_gate.py 内置硬扫描红线）
+# 使用说明：复制后替换镜像版本（严禁 :latest）与 Secret 名称。
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ops-platform-backend
+  labels:
+    app: ops-platform-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ops-platform-backend
+  template:
+    metadata:
+      labels:
+        app: ops-platform-backend
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+      containers:
+        - name: backend
+          image: registry.corp.local/ops/ops-platform-backend:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop: ["ALL"]
+          envFrom:
+            - secretRef:
+                name: ops-platform-secrets
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+          volumeMounts:
+            - name: app-data
+              mountPath: /data
+            - name: ssh-keys
+              mountPath: /run/ssh_keys
+              readOnly: true
+      volumes:
+        - name: app-data
+          persistentVolumeClaim:
+            claimName: ops-platform-data-pvc
+        - name: ssh-keys
+          secret:
+            secretName: ops-platform-ssh-keys
+            defaultMode: 0400

@@ -1,9 +1,0 @@
-{
-  "case": "release-inspection-local-v1",
-  "scope": "本地单人练习，一次载入一个只读 JSON 快照。用 Python 读取样本，无账号、集群、远程调用或后台采集。",
-  "request": "GET /mock/deployments",
-  "items": [
-    {"name": "checkout", "desired": 3, "ready": 2, "observedAt": "2026-11-22T09:00:00+08:00"},
-    {"name": "catalog", "desired": 2, "ready": 2, "observedAt": null}
-  ]
-}

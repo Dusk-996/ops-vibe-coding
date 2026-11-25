@@ -215,6 +215,60 @@ def has_unresolved_issue(markdown_text: str, keywords: tuple[str, ...] = ("BLOCK
     return hits
 
 
+def validate_ops_readiness_structure(markdown_text: str, *, require_p6_deploy: bool = False) -> list[str]:
+    """防敷衍结构校验：确保 04-ops-readiness.md 确实按 12 域清单与 4 级证据执行审查。"""
+    issues: list[str] = []
+    if not re.search(r"(总体结论|结论).{0,24}(PASS_WITH_RISKS|PASS|FAIL)", markdown_text, re.IGNORECASE):
+        issues.append("docs/vibe/04-ops-readiness.md 缺少明确的总体结论（PASS / PASS_WITH_RISKS / FAIL）")
+
+    # 校验 12 域覆盖（A.~L. 或对应英文/中文核心域标识，至少覆盖 10 域防 3 行敷衍报告）
+    domain_patterns = (
+        r"(?:\bA\.\s|破坏性操作|Destructive)",
+        r"(?:\bB\.\s|认证与授权|Authentication)",
+        r"(?:\bC\.\s|审计|\bAudit\b)",
+        r"(?:\bD\.\s|Secret\s*与凭证|Credential)",
+        r"(?:\bE\.\s|远程执行|Remote Execution)",
+        r"(?:\bF\.\s|Kubernetes)",
+        r"(?:\bG\.\s|异步任务|Async Jobs)",
+        r"(?:\bH\.\s|API\s*可靠性|API Reliability)",
+        r"(?:\bI\.\s|可观测性|Observability)",
+        r"(?:\bJ\.\s|数据生命周期|Data Lifecycle)",
+        r"(?:\bK\.\s|部署|\bDeployment\b)",
+        r"(?:\bL\.\s|失败与恢复|Failure\s*/\s*Recovery)",
+    )
+    covered = sum(1 for pat in domain_patterns if re.search(pat, markdown_text, re.IGNORECASE))
+    if covered < 10:
+        issues.append(
+            f"docs/vibe/04-ops-readiness.md 疑似敷衍审查：仅覆盖 {covered}/12 个风险领域（至少需逐域核查 10/12 域，不适用项应显式标 NOT_APPLICABLE）"
+        )
+
+    evidence_tags = ("DOCUMENTED", "STATIC", "TESTED", "RUNTIME_VERIFIED", "NOT_VERIFIED")
+    hit_tags = [t for t in evidence_tags if re.search(rf"\b{t}\b", markdown_text)]
+    if len(hit_tags) < 2:
+        issues.append(
+            "docs/vibe/04-ops-readiness.md 缺少证据等级标注（需区分 STATIC / TESTED / RUNTIME_VERIFIED / NOT_VERIFIED，至少出现 2 类）"
+        )
+
+    if require_p6_deploy:
+        for line in markdown_text.splitlines():
+            if re.search(r"(?:\bK\.\s*部署|Deployment)", line, re.IGNORECASE) and re.search(
+                r"尚未进入\s*P6|NOT_APPLICABLE", line, re.IGNORECASE
+            ):
+                issues.append("P6 阶段 docs/vibe/04-ops-readiness.md 的 K 域（部署）仍停留在未进入 P6/NOT_APPLICABLE，尚未完成部署终审")
+                break
+    return issues
+
+
+def validate_parity_review_structure(markdown_text: str) -> list[str]:
+    """防敷衍结构校验：确保 04-parity-review.md 确实包含覆盖矩阵与结论。"""
+    issues: list[str] = []
+    if not re.search(r"(门禁结论|总体结论|结论).{0,24}(PASS_WITH_NOTES|PASS|FAIL)", markdown_text, re.IGNORECASE):
+        issues.append("docs/vibe/04-parity-review.md 缺少明确的门禁结论（PASS / PASS_WITH_NOTES / FAIL）")
+    if not re.search(r"(覆盖矩阵|\bMATCH\b|\bAPPROVED_CHANGE\b|\bDEVIATION\b)", markdown_text):
+        issues.append("docs/vibe/04-parity-review.md 疑似敷衍审查：缺少覆盖矩阵或 MATCH/APPROVED_CHANGE 逐项核对记录")
+    return issues
+
+
 def iter_project_files(project: Path, include_docs_vibe: bool = False) -> list[Path]:
     """遍历项目文件，自动跳过构建产物、依赖与内部目录。"""
     results: list[Path] = []
@@ -345,6 +399,13 @@ def builtin_app_scan(project: Path) -> list[str]:
             ):
                 issues.append(f"[MOCK] {rel}: 前端源码默认开启了 Mock 模式")
 
+        # 5. Go 后端/Agent/CLI 基础安全红线（跳过 TLS 校验、Shell 拼接命令注入）
+        if suffix == ".go" and not test_flag:
+            if re.search(r"InsecureSkipVerify\s*:\s*true\b", text):
+                issues.append(f"[TLS] {rel}: 禁止在生产 Go 代码中设置 InsecureSkipVerify: true")
+            if re.search(r"""exec\.Command\s*\(\s*["'](?:sh|bash)["']\s*,\s*["']-c["']\s*,\s*fmt\.Sprintf""", text):
+                issues.append(f"[CMD-INJECT] {rel}: 禁止用 fmt.Sprintf 拼接 Shell 命令，请使用参数白名单")
+
     return issues
 
 
@@ -452,6 +513,7 @@ def run_optional_scanners(project: Path, *, include_deploy: bool = False) -> tup
     all_files = iter_project_files(project_res, include_docs_vibe=False)
 
     has_py = any(f.suffix == ".py" for f in all_files)
+    has_go = any(f.suffix == ".go" for f in all_files)
     has_backend_py = any(
         f.suffix == ".py" and f.relative_to(project_res).as_posix().startswith("backend/") for f in all_files
     )
@@ -490,6 +552,18 @@ def run_optional_scanners(project: Path, *, include_deploy: bool = False) -> tup
             results.append({"tool": "bandit", "status": status, "returncode": res["returncode"]})
             if not res["passed"]:
                 failures.append(f"bandit 安全扫描未通过（exit={res['returncode']}）")
+
+        # go vet（Go 项目代码级，P4b）
+        if has_go:
+            if not shutil.which("go"):
+                results.append({"tool": "go vet", "status": "SKIPPED", "reason": "not installed"})
+            else:
+                go_cwd = project_res / "backend" if (project_res / "backend" / "go.mod").is_file() else project_res
+                res = run_cmd("go vet ./...", cwd=go_cwd)
+                status = "PASS" if res["passed"] else "FAIL"
+                results.append({"tool": "go vet", "status": status, "returncode": res["returncode"]})
+                if not res["passed"]:
+                    failures.append(f"go vet 检查未通过（exit={res['returncode']}）")
     else:
         # hadolint（仅 P6 部署阶段）
         dockerfiles = [
@@ -559,6 +633,7 @@ def check_mutating_security_tests(project: Path) -> list[str]:
 
 def check_p1(project: Path, state: dict[str, Any], _args: argparse.Namespace | None = None) -> tuple[list[str], dict[str, Any]]:
     errors: list[str] = []
+    kind = (state.get("kind") or "web").lower()
     design = project / "docs" / "vibe" / "01-design.md"
     brief = project / "docs" / "vibe" / "01-brief.md"
     doc = design if design.exists() else brief
@@ -575,18 +650,20 @@ def check_p1(project: Path, state: dict[str, Any], _args: argparse.Namespace | N
         if not has_non_goal:
             errors.append(f"{doc.relative_to(project).as_posix()} 未写明“非目标 / Non-Goal”")
 
-    if not proto.exists() or not read_text(proto).strip():
-        errors.append("缺少或为空: docs/vibe/01-prototype/index.html")
-    else:
-        parser = _HtmlValidator()
-        try:
-            parser.feed(read_text(proto))
-            parser.close()
-        except Exception as exc:
-            errors.append(f"01-prototype/index.html 解析失败: {exc}")
+    # 仅 Web 平台强制要求高保真 HTML 原型；纯后端 service/cli 允许无前端原型
+    if kind == "web":
+        if not proto.exists() or not read_text(proto).strip():
+            errors.append("缺少或为空: docs/vibe/01-prototype/index.html")
         else:
-            if len(parser.tags) < 3 or parser.text_len == 0:
-                errors.append("01-prototype/index.html 内容过少，不是有效可交互 HTML 原型")
+            parser = _HtmlValidator()
+            try:
+                parser.feed(read_text(proto))
+                parser.close()
+            except Exception as exc:
+                errors.append(f"01-prototype/index.html 解析失败: {exc}")
+            else:
+                if len(parser.tags) < 3 or parser.text_len == 0:
+                    errors.append("01-prototype/index.html 内容过少，不是有效可交互 HTML 原型")
 
     return errors, {}
 
@@ -620,8 +697,9 @@ def check_p2(project: Path, state: dict[str, Any], _args: argparse.Namespace | N
 
 
 def check_p3(project: Path, state: dict[str, Any], args: argparse.Namespace | None = None) -> tuple[list[str], dict[str, Any]]:
-    """v3.4 P3：规格、契约、任务书与干净空工程骨架（严禁提前生成 P6 部署文件）。"""
+    """v3.4 P3：规格、契约、任务书与干净空工程骨架（严禁提前生成 P6 部署文件；支持 web/service/cli）。"""
     errors: list[str] = []
+    kind = (state.get("kind") or "web").lower()
 
     if not state["gates"]["p2"].get("approved"):
         errors.append("前置门禁未通过：P2（技术栈与核心机制）尚未获得人工 approve p2")
@@ -634,15 +712,21 @@ def check_p3(project: Path, state: dict[str, Any], args: argparse.Namespace | No
     elif not actual_hash or actual_hash != expected_hash:
         errors.append("根 AGENTS.md 安全红线区块（VIBE-GUARD）缺失或已被篡改")
 
-    for rel in ("docs/vibe/03-spec.md", "docs/vibe/03-openapi.yaml", "docs/vibe/03-tasks.md"):
+    req_docs = ("docs/vibe/03-spec.md", "docs/vibe/03-tasks.md") if kind == "cli" else ("docs/vibe/03-spec.md", "docs/vibe/03-openapi.yaml", "docs/vibe/03-tasks.md")
+    for rel in req_docs:
         p = project / rel
         if not p.exists() or not read_text(p).strip():
             errors.append(f"缺少或为空: {rel}")
 
-    for dname in ("backend", "frontend"):
-        d = project / dname
-        if not d.is_dir() or not any(d.iterdir()):
-            errors.append(f"缺少或为空目录: {dname}/")
+    if kind == "web":
+        for dname in ("backend", "frontend"):
+            d = project / dname
+            if not d.is_dir() or not any(d.iterdir()):
+                errors.append(f"缺少或为空目录: {dname}/")
+    else:
+        code_dirs = ("backend", "cmd", "internal", "src", "pkg")
+        if not any((project / d).is_dir() and any((project / d).iterdir()) for d in code_dirs):
+            errors.append("非 Web 项目缺少源码骨架目录（至少需存在非空 backend/、cmd/、internal/、src/ 或 pkg/ 之一）")
 
     tasks_path = project / "docs" / "vibe" / "03-tasks.md"
     if tasks_path.exists():
@@ -653,7 +737,7 @@ def check_p3(project: Path, state: dict[str, Any], args: argparse.Namespace | No
             errors.append("mutating 模式：docs/vibe/03-tasks.md 需包含 409 防重/超时安全用例任务")
 
     cmds = state.get("commands") or {}
-    allow_skip_fe = bool(getattr(args, "allow_skip_frontend", False))
+    allow_skip_fe = bool(getattr(args, "allow_skip_frontend", False)) or (kind != "web")
     if not cmds.get("frontend_build", "").strip() and not allow_skip_fe:
         errors.append(".vibe/state.json 尚未配置 commands.frontend_build（纯离线演练可加 --allow-skip-frontend）")
     if not cmds.get("backend_test", "").strip():
@@ -666,12 +750,16 @@ def check_p3(project: Path, state: dict[str, Any], args: argparse.Namespace | No
 
 
 def check_p4a(project: Path, state: dict[str, Any], args: argparse.Namespace | None = None) -> tuple[list[str], dict[str, Any]]:
-    """v3.4 P4a：前端实现、生产构建、UI 基线与原型一致性校验（不涉及部署）。"""
+    """v3.4 P4a：前端实现、生产构建、UI 基线与原型一致性校验（非 Web 项目自动跳过）。"""
     errors: list[str] = []
     extra: dict[str, Any] = {"command_results": []}
+    kind = (state.get("kind") or "web").lower()
 
     if not state["gates"]["p3"].get("approved"):
         errors.append("前置门禁未通过：P3（骨架、核心逻辑与验收用例）尚未获得人工 approve p3")
+
+    if kind != "web":
+        return errors, extra
 
     agents_md = project / "AGENTS.md"
     expected_hash = state.get("agents_guard_sha256")
@@ -701,10 +789,14 @@ def check_p4a(project: Path, state: dict[str, Any], args: argparse.Namespace | N
             errors.append(f"frontend/{env_name} 禁止开启 VITE_USE_MOCK=true")
 
     parity_doc = project / "docs" / "vibe" / "04-parity-review.md"
-    if parity_doc.exists() and read_text(parity_doc).strip():
-        unresolved = has_unresolved_issue(read_text(parity_doc))
+    if not parity_doc.exists() or not read_text(parity_doc).strip():
+        errors.append("缺少或为空: docs/vibe/04-parity-review.md（请先实读 prototype-parity-review 清单并产出核对报告）")
+    else:
+        p_text = read_text(parity_doc)
+        unresolved = has_unresolved_issue(p_text)
         if unresolved:
             errors.append(f"docs/vibe/04-parity-review.md 存在未关闭 BLOCKER/FAIL: {unresolved[0]}")
+        errors.extend(validate_parity_review_structure(p_text))
 
     errors.extend(builtin_app_scan(project))
     errors.extend(scan_frontend_ui_baseline(project))
@@ -770,9 +862,12 @@ def check_p4b(project: Path, state: dict[str, Any], args: argparse.Namespace | N
         if not p.exists() or not read_text(p).strip():
             errors.append(f"缺少或为空: {rel}")
         else:
-            unresolved = has_unresolved_issue(read_text(p))
+            doc_text = read_text(p)
+            unresolved = has_unresolved_issue(doc_text)
             if unresolved:
                 errors.append(f"{rel} 存在未关闭 BLOCKER/FAIL: {unresolved[0]}")
+            if rel.endswith("04-ops-readiness.md"):
+                errors.extend(validate_ops_readiness_structure(doc_text, require_p6_deploy=False))
 
     return errors, extra
 
@@ -810,9 +905,11 @@ def check_p5(project: Path, state: dict[str, Any], args: argparse.Namespace | No
 
     ops_doc = project / "docs" / "vibe" / "04-ops-readiness.md"
     if ops_doc.exists() and read_text(ops_doc).strip():
-        unresolved_ops = has_unresolved_issue(read_text(ops_doc))
+        ops_text = read_text(ops_doc)
+        unresolved_ops = has_unresolved_issue(ops_text)
         if unresolved_ops:
             errors.append(f"docs/vibe/04-ops-readiness.md 存在未关闭 BLOCKER/FAIL: {unresolved_ops[0]}")
+        errors.extend(validate_ops_readiness_structure(ops_text, require_p6_deploy=False))
 
     return errors, extra
 
@@ -875,9 +972,11 @@ def check_p6(project: Path, state: dict[str, Any], args: argparse.Namespace | No
 
     ops_doc = project / "docs" / "vibe" / "04-ops-readiness.md"
     if ops_doc.exists() and read_text(ops_doc).strip():
-        unresolved_ops = has_unresolved_issue(read_text(ops_doc))
+        ops_text = read_text(ops_doc)
+        unresolved_ops = has_unresolved_issue(ops_text)
         if unresolved_ops:
             errors.append(f"docs/vibe/04-ops-readiness.md 存在未关闭 BLOCKER/FAIL: {unresolved_ops[0]}")
+        errors.extend(validate_ops_readiness_structure(ops_text, require_p6_deploy=True))
 
     p4a_gate = state["gates"]["p4a"]
     p4b_gate = state["gates"]["p4b"]
@@ -980,9 +1079,22 @@ def cmd_init(args: argparse.Namespace) -> int:
             entry.update({"approved": False, "approved_at": None, "approved_by": None, "note": ""})
         gates[s] = entry
 
+    kind = getattr(args, "kind", "web") or "web"
+    if kind != "web":
+        gates["p4a"].update(
+            {
+                "status": "skipped",
+                "approved": True,
+                "approved_at": now_iso(),
+                "approved_by": f"auto(kind={kind})",
+                "note": "非 Web 项目自动跳过 P4a 前端验收",
+            }
+        )
+
     state = {
         "schema_version": SCHEMA_VERSION,
         "project_name": args.name,
+        "kind": kind,
         "mode": args.mode,
         "selected_style": "",
         "core_test_pattern": "",
@@ -1000,7 +1112,7 @@ def cmd_init(args: argparse.Namespace) -> int:
     }
     save_state(project, state)
 
-    print(f"[OK] 已初始化项目 `{args.name}`（mode={args.mode}，schema=v{SCHEMA_VERSION}）")
+    print(f"[OK] 已初始化项目 `{args.name}`（kind={kind}，mode={args.mode}，schema=v{SCHEMA_VERSION}）")
     print(f"  - 控制中枢: {agents_path}")
     print(f"  - 状态文件: {state_path}")
     print(f"  - 产物目录: {project / 'docs' / 'vibe'}")
@@ -1064,6 +1176,8 @@ def cmd_approve(args: argparse.Namespace) -> int:
     gate["approved_by"] = args.by or getpass.getuser()
     gate["note"] = args.note or ""
     state["current_stage"] = NEXT_STAGE[stage]
+    if (state.get("kind") or "web") != "web" and state["current_stage"] == "p4a":
+        state["current_stage"] = "p4b"
     save_state(project, state)
 
     print(f"[APPROVED] {stage.upper()} 已由 {gate['approved_by']} 批准，当前阶段推进至：{state['current_stage'].upper()}。")
@@ -1074,7 +1188,7 @@ def cmd_status(args: argparse.Namespace) -> int:
     project = Path(args.project).resolve()
     state = load_state(project)
     print(
-        f"Project: {state['project_name']} | Mode: {state['mode']} | Current: {state['current_stage'].upper()} | Schema: v{state['schema_version']}"
+        f"Project: {state['project_name']} | Kind: {state.get('kind', 'web')} | Mode: {state['mode']} | Current: {state['current_stage'].upper()} | Schema: v{state['schema_version']}"
     )
     print("-" * 72)
     for s in STAGES:
@@ -1101,6 +1215,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_init.add_argument("--project", required=True, help="目标项目目录路径")
     p_init.add_argument("--name", required=True, help="项目名称")
     p_init.add_argument("--mode", required=True, choices=["readonly", "mutating"], help="运维风险模式")
+    p_init.add_argument("--kind", default="web", choices=["web", "service", "cli"], help="项目形态：web(前后端平台)/service(纯后端或Agent)/cli(命令行工具)")
     p_init.add_argument("--force", action="store_true", help="强制覆盖已有 .vibe/state.json 和 AGENTS.md")
     p_init.set_defaults(func=cmd_init)
 

@@ -7,7 +7,7 @@
   "initialized_at": "2026-11-23T23:52:54+08:00",
   "current_stage": "released",
   "max_retries": 3,
-  "agents_guard_sha256": "a9f4e1626f0fc8a4a25372b81ca2bbb7c4c07db3109feab552369de7f97f00ba",
+  "agents_guard_sha256": "6172df3d0640999a5aef969dc394f9ba946317cd41a6c4a6d0e3005127e0d456",
   "commands": {
     "frontend_build": "npm --prefix frontend run build",
     "frontend_test": "",
@@ -108,7 +108,7 @@
     "p5": {
       "status": "passed",
       "retries": 0,
-      "last_checked_at": "2026-11-26T00:20:13+08:00",
+      "last_checked_at": "2026-11-26T00:55:04+08:00",
       "findings": [],
       "approved": true,
       "approved_at": "2026-11-26T00:22:26+08:00",
@@ -122,7 +122,7 @@
     "p6": {
       "status": "passed",
       "retries": 0,
-      "last_checked_at": "2026-11-26T00:44:05+08:00",
+      "last_checked_at": "2026-11-26T00:55:48+08:00",
       "findings": [],
       "approved": true,
       "approved_at": "2026-11-26T00:37:33+08:00",
@@ -158,5 +158,6 @@
         "README.md"
       ]
     }
-  }
+  },
+  "kind": "web"
 }

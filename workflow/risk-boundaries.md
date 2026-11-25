@@ -30,6 +30,9 @@
   - Python `smtplib` 对接 QQ 邮箱（465 SSL）与企业邮箱（587 STARTTLS）须使用 RFC 中文 `Header`、`formataddr`、`Date`、`Message-ID`、显式 `ehlo()`，并在 `finally` 中收紧 `quit()` 短超时（2s）；
   - 精准解包底层超时返回 `504`（**严禁任何自动重试**）；其他 SMTP 失败向前端返回脱敏运维人话，完整异常堆栈仅写服务端日志。
 
+- **应用安全扫描（Python / 前端 / Go）**：`builtin_app_scan` 自动拦截明文私钥/凭据、`reload=True`、`CORS *`、`VITE_USE_MOCK=true`，以及 Go 代码中的 `InsecureSkipVerify: true` 与 `exec.Command("sh", "-c", fmt.Sprintf(...))` 命令注入；外部可选扫描器支持 `gitleaks`、`ruff`、`bandit`、`go vet`（安装即可自动生效，未装记 `SKIPPED`）。
+- **防审查敷衍结构校验**：`check p4a` 校验 `04-parity-review.md` 必含门禁结论与覆盖矩阵；`check p4b`/`check p5`/`check p6` 校验 `04-ops-readiness.md` 必含总体结论、至少 10/12 域覆盖及至少 2 类证据等级（且 `check p6` 强制 K 域完成终审）。
+
 ### 2.3 `mutating` 必测 4 类负面安全用例（`check p4b` 硬校验）
 1. **`401 Unauthorized`**：未携带有效 Token 调用受保护读/写接口被拒、不产生数据变更；
 2. **`403 Forbidden`**：只读角色（`viewer`）调用写接口被拒、不产生数据变更并落审计；

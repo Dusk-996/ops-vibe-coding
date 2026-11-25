@@ -28,11 +28,13 @@
 
 ### 1. 初始化项目（一键生成受保护的 `AGENTS.md` 与 `.vibe/state.json`）
 ```bash
-# 含写操作/巡检触发/邮件发送的运维平台选 --mode mutating；纯只读看板选 --mode readonly
+# --mode: 含变更/巡检/邮件选 mutating，纯只读选 readonly
+# --kind: web（默认前后端平台）/ service（无前端后端或Agent）/ cli（命令行工具）
 python ../ops-vibe-coding/scripts/vibe_gate.py init \
   --project ./my-ops-platform \
   --name my-ops-platform \
-  --mode mutating
+  --mode mutating \
+  --kind web
 ```
 
 ### 2. 在 Codex 中按阶段驱动（每步机器校验 + 人工拍板）
@@ -45,6 +47,13 @@ python ../ops-vibe-coding/scripts/vibe_gate.py approve p1 --project . --by ops-u
 
 # 随时查看全 7 阶段状态与命令配置
 python ../ops-vibe-coding/scripts/vibe_gate.py status --project .
+```
+
+### 3. （推荐）在开发机 / CI 启用全部外部安全扫描器
+`vibe_gate.py` 已内置自动探测钩子（未安装时如实记为 `SKIPPED`，装好即自动生效）：
+```bash
+pip install -i https://pypi.tuna.tsinghua.edu.cn/simple ruff bandit
+# 可选二进制：gitleaks（防密钥泄漏）、hadolint（P6 Dockerfile 规范）；Go 项目自动跑 go vet
 ```
 
 ---

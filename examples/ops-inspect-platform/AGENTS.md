@@ -14,7 +14,7 @@
 ### 核心执行原则：阶段内机器闭环，阶段间强制人工确认，部署专属 P6
 - **严禁跨阶段抢跑**：每个阶段（`p1` / `p2` / `p3` / `p4a` / `p4b` / `p5` / `p6`）完成后，必须先跑 `python ../../scripts/vibe_gate.py check <stage> --project .` 拿到退出码 0，然后**立即停手**，严禁未经用户确认顺手进入下一阶段。
 - **只有 P6 阶段才涉及部署（#23）**：**P1–P5 任何阶段绝不设计、编写或评估部署文件**（禁止提前生成 `docker-compose.yml`、`Dockerfile`、`nginx.conf`、`*.service`、`deploy/`、`k8s/`，也不在 P4b/P5 提前评估尚未进入的部署产物）；`vibe_gate.py` 在 `p5` 获批前会自动阻断 `[EARLY-DEPLOY]`。所有部署形态拍板、脚本打包、容器/服务权限扫描、备份恢复与回滚验证，一律在 **P5 全面真环境测试全部通过并放行后**，于独立的 **P6 部署阶段**完成。
-- **Skill 实读防盲签铁律（#24）**：进入路由表标注的阶段（尤其是 `prototype-parity-review`、`code-review`、`ops-readiness-review`、`verification-before-completion` 等审查/验证环节）前，必须先**真实读取**对应 `SKILL.md` 及清单文件，按条款逐项以代码行号或实测输出举证，严禁凭感觉写结论或替人类擅自接受 `MAJOR` 风险；对简单文案/单文件小改遵循 KISS，不强套全套重 Skill。
+- **Skill 实读防盲签铁律（#24）**：进入路由表标注的阶段（尤其是 `prototype-parity-review`、`code-review`、`ops-readiness-review`、`verification-before-completion` 等审查/验证环节）前，必须先**真实读取**对应 `SKILL.md` 及清单文件，按条款逐项以代码行号或实测输出举证，严禁凭感觉写结论或替人类擅自接受 `MAJOR` 风险；`vibe_gate.py` 已强制执行审查报告结构校验（`04-parity-review.md` 必含覆盖矩阵与结论，`04-ops-readiness.md` 必覆盖 12 域中至少 10 域及至少 2 类证据等级，且 P6 必须关闭 K 域终审）。对简单文案/单文件小改遵循 KISS，不强套全套重 Skill。
 - **前后端严格分段验收（#12）**：先在 `P4a` 完成并真实启动前端，等用户打开页面验收通过（`approve p4a`）后，才允许进入 `P4b` 编写后端与联调。
 - **上游反向校准闭环（#13）**：若在 `P2` 确认核心运维机制后发现 `P1` 原型字段或流程存在偏差，必须先同步回改 `01-design.md` 与 `01-prototype/index.html` 并复跑 `check p1`、`check p2`。
 - **阶段末固定三段汇报（大白话，不甩源码）**：
